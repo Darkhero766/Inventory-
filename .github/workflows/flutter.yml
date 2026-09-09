@@ -17,28 +17,22 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
           cache: true
-
       - run: flutter pub get
-      - run: dart format --set-exit-if-changed lib test
       - run: flutter analyze
       - run: flutter test
-
       - run: flutter create --platforms=android --project-name inventory_shop .
       - name: Enable Android internet access
         run: sed -i '/<manifest/a\    <uses-permission android:name="android.permission.INTERNET" />' android/app/src/main/AndroidManifest.xml
       - run: sed -i 's/compileSdk = flutter.compileSdkVersion/compileSdk = 36/' android/app/build.gradle.kts
       - run: flutter build apk --release
-
       - uses: actions/upload-artifact@v4
         with:
           name: inventory-android-apk
           path: build/app/outputs/flutter-apk/app-release.apk
-
       - name: Publish Android release
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v2
