@@ -30,6 +30,7 @@ jobs:
           s = p.read_text()
           s = s.replace('    ]))),\n    actions:', '    ])))),\n    actions:')
           s = s.replace('onCheckout: checkout))));', 'onCheckout: checkout)))));')
+          s = s.replace('=> const Frame(', '=> Frame(')
           start = s.find('Future<void> showProductDetails(')
           end = s.find('class _DetailStat', start)
           if start >= 0 and end > start:
