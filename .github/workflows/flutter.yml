@@ -21,6 +21,8 @@ jobs:
       # The repository does not commit generated Flutter platform scaffolding.
       # Generate Android files in CI so the real release APK can still be built.
       - run: flutter create --platforms=android --project-name inventory_shop .
+      # Current Flutter Android dependencies require API 36 for AAR metadata checks.
+      - run: sed -i 's/compileSdk = flutter.compileSdkVersion/compileSdk = 36/' android/app/build.gradle.kts
       - run: flutter build apk --release
       - uses: actions/upload-artifact@v4
         with:
