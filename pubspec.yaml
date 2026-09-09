@@ -1,7 +1,7 @@
 name: inventory_shop
 description: Premium offline-first electronics shop inventory and POS application.
 publish_to: 'none'
-version: 2.0.0+2
+version: 2.1.0+3
 
 environment:
   sdk: '>=3.4.0 <4.0.0'
@@ -22,6 +22,7 @@ dependencies:
   image_picker: ^1.1.2
   mobile_scanner: ^5.2.3
   uuid: ^4.5.0
+  http: ^1.5.0
 
 dev_dependencies:
   flutter_test:
