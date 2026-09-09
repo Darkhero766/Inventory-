@@ -1,7 +1,7 @@
 name: inventory_shop
 description: Premium offline-first electronics shop inventory and POS application.
 publish_to: 'none'
-version: 1.0.0+1
+version: 2.0.0+2
 
 environment:
   sdk: '>=3.4.0 <4.0.0'
@@ -16,6 +16,7 @@ dependencies:
   intl: ^0.19.0
   file_picker: ^8.0.7
   csv: ^6.0.0
+  excel: ^4.0.6
   pdf: ^3.11.1
   printing: ^5.13.4
   shared_preferences: ^2.3.2
