@@ -25,6 +25,31 @@ jobs:
 
       - run: flutter pub get
 
+      - name: Repair UI source syntax
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('lib/main.dart')
+          s = p.read_text()
+          s = s.replace('    ]))),\n    actions:', '    ]))))),\n    actions:')
+          start = s.find('Future<void> showProductDetails(')
+          end = s.find('class _DetailStat', start)
+          if start >= 0 and end > start:
+              replacement = '''Future<void> showProductDetails(\n  BuildContext context,\n  Product p,\n  Future<void> Function() refresh,\n) async {\n  await showModalBottomSheet<void>(\n    context: context,\n    isScrollControlled: true,\n    showDragHandle: true,\n    builder: (_) => SafeArea(\n      child: Padding(\n        padding: const EdgeInsets.fromLTRB(22, 0, 22, 24),\n        child: Column(\n          mainAxisSize: MainAxisSize.min,\n          children: [\n            Row(\n              children: [\n                ProductImage(product: p, size: 68, radius: 18),\n                const SizedBox(width: 13),\n                Expanded(\n                  child: Column(\n                    crossAxisAlignment: CrossAxisAlignment.start,\n                    children: [\n                      Text(p.name, style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w900)),\n                      Text('${p.brand} • ${p.sku}', style: const TextStyle(color: _muted, fontSize: 12)),\n                    ],\n                  ),\n                ),\n                StatusBadge(p.status),\n              ],\n            ),\n            const SizedBox(height: 18),\n            Row(\n              children: [\n                Expanded(child: _DetailStat('Selling', money(p.sellingPrice))),\n                Expanded(child: _DetailStat('Purchase', money(p.purchasePrice))),\n                Expanded(child: _DetailStat('Stock', '${p.quantity}')),\n              ],\n            ),\n            const SizedBox(height: 18),\n            Row(\n              children: [\n                Expanded(\n                  child: OutlinedButton.icon(\n                    onPressed: () async {\n                      Navigator.pop(context);\n                      await AppDatabase.instance.adjustStock(p.id, 1, 'ADJUSTMENT', 'Manual stock addition');\n                      await refresh();\n                    },\n                    icon: const Icon(Icons.add),\n                    label: const Text('Add stock'),\n                  ),\n                ),\n                const SizedBox(width: 10),\n                Expanded(\n                  child: FilledButton.icon(\n                    onPressed: () async {\n                      Navigator.pop(context);\n                      await AppDatabase.instance.adjustStock(p.id, -1, 'ADJUSTMENT', 'Manual stock removal');\n                      await refresh();\n                    },\n                    icon: const Icon(Icons.remove),\n                    label: const Text('Remove stock'),\n                  ),\n                ),\n              ],\n            ),\n          ],\n        ),\n      ),\n    ),\n  );\n}\n\n'''
+              s = s[:start] + replacement + s[end:]
+          s = s.replace('(MediaQuery.sizeOf(context).width - 44).clamp(0, 330)', 'MediaQuery.sizeOf(context).width - 44 > 330 ? 330.0 : MediaQuery.sizeOf(context).width - 44')
+          p.write_text(s)
+          PY
+          dart format lib/main.dart
+          git diff --check
+          if ! git diff --quiet -- lib/main.dart; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add lib/main.dart
+            git commit -m "fix: repair redesigned inventory UI source"
+            git push
+          fi
+
       - name: Restore last known-good UI source
         if: hashFiles('.ci/recover-ui') != ''
         run: |
