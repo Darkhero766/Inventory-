@@ -33,6 +33,7 @@ jobs:
           s = s.replace('=> const Frame(', '=> Frame(')
           s = s.replace('child: ListView(children: [', 'child: ListView(children: const [')
           s = s.replace('          value: value,', '          initialValue: value,')
+          s = s.replace('      );\n\nclass StatusBadge', '      );\n}\n\nclass StatusBadge')
           start = s.find('Future<void> showProductDetails(')
           end = s.find('class _DetailStat', start)
           if start >= 0 and end > start:
