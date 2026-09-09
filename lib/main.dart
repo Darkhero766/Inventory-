@@ -885,7 +885,7 @@ class _SalesPageState extends State<SalesPage> {
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Row(children: [const Expanded(child: Text('Current order', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),), if (cart.isNotEmpty) Text('${cart.length} items', style: const TextStyle(color: _muted, fontSize: 11))]),
             const SizedBox(height: 12),
-            Expanded(child: cart.isEmpty ? const _EmptyCard(icon: Icons.shopping_bag_outlined, title: 'Your cart is empty', subtitle: 'Tap a product to add it to the order.') : ListView.separated(itemCount: cart.length, separatorBuilder: (_, __) => const Divider(height: 1), itemBuilder: (_, i) { final x = cart[i]; return ListTile(contentPadding: EdgeInsets.zero, title: Text(x['name'].toString(), maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12)), subtitle: Text('${x['quantity']} × ${money(x['price'] as num)}', style: const TextStyle(fontSize: 11)), trailing: IconButton(onPressed: () => removeAt(i), icon: const Icon(Icons.close, size: 18)); })),
+            Expanded(child: cart.isEmpty ? const _EmptyCard(icon: Icons.shopping_bag_outlined, title: 'Your cart is empty', subtitle: 'Tap a product to add it to the order.') : ListView.separated(itemCount: cart.length, separatorBuilder: (_, __) => const Divider(height: 1), itemBuilder: (_, i) { final x = cart[i]; return ListTile(contentPadding: EdgeInsets.zero, title: Text(x['name'].toString(), maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12)), subtitle: Text('${x['quantity']} × ${money(x['price'] as num)}', style: const TextStyle(fontSize: 11)), trailing: IconButton(onPressed: () => removeAt(i), icon: const Icon(Icons.close, size: 18))); })),
             const Divider(),
             Row(children: [const Expanded(child: Text('Total', style: TextStyle(color: _muted))), Text(money(total), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 22))]),
             const SizedBox(height: 11),
@@ -966,7 +966,6 @@ class FeatureTile extends StatelessWidget {
       );
 }
 
-class _SellProductCardPlaceholder {}
 
 const _categories = <(String, IconData)>[
   ('Mobile Phones', Icons.smartphone_rounded),
