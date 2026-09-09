@@ -1566,7 +1566,7 @@ class PurchasesPage extends StatelessWidget {
   const PurchasesPage({super.key});
   @override
   Widget build(BuildContext context) => Frame(
-          child: ListView(children: [
+          child: ListView(children: const [
         PageHeader(
             title: 'Purchases',
             subtitle: 'Receive stock and manage supplier invoices'),
@@ -1593,7 +1593,7 @@ class MorePage extends StatelessWidget {
   const MorePage({super.key});
   @override
   Widget build(BuildContext context) => Frame(
-          child: ListView(children: [
+          child: ListView(children: const [
         PageHeader(
             title: 'More', subtitle: 'Business tools, reports and settings'),
         SizedBox(height: 18),
