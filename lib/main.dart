@@ -28,7 +28,8 @@ class InventoryApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = ColorScheme.fromSeed(seedColor: _primary, brightness: Brightness.light);
+    final scheme =
+        ColorScheme.fromSeed(seedColor: _primary, brightness: Brightness.light);
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Inventory',
@@ -38,17 +39,28 @@ class InventoryApp extends StatelessWidget {
         scaffoldBackgroundColor: _bg,
         fontFamily: 'Inter',
         textTheme: const TextTheme(
-          headlineLarge: TextStyle(fontSize: 30, fontWeight: FontWeight.w900, color: _ink, letterSpacing: -1),
-          headlineMedium: TextStyle(fontSize: 25, fontWeight: FontWeight.w900, color: _ink, letterSpacing: -.7),
-          titleLarge: TextStyle(fontSize: 19, fontWeight: FontWeight.w900, color: _ink),
-          titleMedium: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: _ink),
+          headlineLarge: TextStyle(
+              fontSize: 30,
+              fontWeight: FontWeight.w900,
+              color: _ink,
+              letterSpacing: -1),
+          headlineMedium: TextStyle(
+              fontSize: 25,
+              fontWeight: FontWeight.w900,
+              color: _ink,
+              letterSpacing: -.7),
+          titleLarge:
+              TextStyle(fontSize: 19, fontWeight: FontWeight.w900, color: _ink),
+          titleMedium:
+              TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: _ink),
           bodyMedium: TextStyle(fontSize: 14, color: _muted),
         ),
         cardTheme: CardThemeData(
           elevation: 0,
           color: Colors.white,
           margin: EdgeInsets.zero,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
         ),
         navigationBarTheme: NavigationBarThemeData(
           height: 76,
@@ -61,10 +73,15 @@ class InventoryApp extends StatelessWidget {
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
           fillColor: Colors.white,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 14),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 15, vertical: 14),
           hintStyle: const TextStyle(color: Color(0xFF9B9FAA), fontSize: 14),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(17), borderSide: BorderSide.none),
-          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(17), borderSide: BorderSide.none),
+          border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(17),
+              borderSide: BorderSide.none),
+          enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(17),
+              borderSide: BorderSide.none),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(17),
             borderSide: const BorderSide(color: _primary, width: 1.3),
@@ -98,7 +115,9 @@ class _AppShellState extends State<AppShell> {
   @override
   Widget build(BuildContext context) {
     final pages = <Widget>[
-      HomePage(loadDatabase: widget.loadDatabase, onInventory: () => setState(() => index = 1)),
+      HomePage(
+          loadDatabase: widget.loadDatabase,
+          onInventory: () => setState(() => index = 1)),
       const InventoryPage(),
       const PurchasesPage(),
       const SalesPage(),
@@ -123,7 +142,8 @@ class _AppShellState extends State<AppShell> {
                             extended: true,
                             minExtendedWidth: 200,
                             selectedIndex: index,
-                            onDestinationSelected: (v) => setState(() => index = v),
+                            onDestinationSelected: (v) =>
+                                setState(() => index = v),
                             destinations: [
                               for (var i = 0; i < labels.length; i++)
                                 NavigationRailDestination(
@@ -134,7 +154,8 @@ class _AppShellState extends State<AppShell> {
                             ],
                           ),
                         ),
-                        const Text('ElectroMart • Main Store', style: TextStyle(color: _muted, fontSize: 10)),
+                        const Text('ElectroMart • Main Store',
+                            style: TextStyle(color: _muted, fontSize: 10)),
                       ],
                     ),
                   ),
@@ -178,8 +199,11 @@ class _BrandLockup extends StatelessWidget {
           const Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('INVENTORY', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1)),
-              Text('ElectroMart', style: TextStyle(fontSize: 10, color: _muted)),
+              Text('INVENTORY',
+                  style:
+                      TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1)),
+              Text('ElectroMart',
+                  style: TextStyle(fontSize: 10, color: _muted)),
             ],
           ),
         ],
@@ -208,7 +232,8 @@ class PageHeader extends StatelessWidget {
   final String title;
   final String? subtitle;
   final Widget? action;
-  const PageHeader({super.key, required this.title, this.subtitle, this.action});
+  const PageHeader(
+      {super.key, required this.title, this.subtitle, this.action});
 
   @override
   Widget build(BuildContext context) => LayoutBuilder(
@@ -225,7 +250,9 @@ class PageHeader extends StatelessWidget {
           );
           if (action == null) return heading;
           if (c.maxWidth < 620) {
-            return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [heading, const SizedBox(height: 12), action!]);
+            return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [heading, const SizedBox(height: 12), action!]);
           }
           return Row(children: [Expanded(child: heading), action!]);
         },
@@ -281,8 +308,10 @@ class _HomePageState extends State<HomePage> {
     try {
       final db = await AppDatabase.instance.db;
       final list = await AppDatabase.instance.products();
-      final s = await db.rawQuery('SELECT COALESCE(SUM(total),0) value FROM sales');
-      final p = await db.rawQuery('SELECT COALESCE(SUM(total),0) value FROM purchases');
+      final s =
+          await db.rawQuery('SELECT COALESCE(SUM(total),0) value FROM sales');
+      final p = await db
+          .rawQuery('SELECT COALESCE(SUM(total),0) value FROM purchases');
       if (!mounted) return;
       setState(() {
         products = list;
@@ -297,8 +326,10 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    final low = products.where((p) => p.quantity <= p.minimumStock).take(5).toList();
-    final value = products.fold<double>(0, (sum, p) => sum + p.quantity * p.purchasePrice);
+    final low =
+        products.where((p) => p.quantity <= p.minimumStock).take(5).toList();
+    final value = products.fold<double>(
+        0, (sum, p) => sum + p.quantity * p.purchasePrice);
     return Frame(
       child: RefreshIndicator(
         onRefresh: load,
@@ -311,9 +342,15 @@ class _HomePageState extends State<HomePage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Good morning', style: TextStyle(fontSize: 30, fontWeight: FontWeight.w900, color: _ink, letterSpacing: -1)),
+                      Text('Good morning',
+                          style: TextStyle(
+                              fontSize: 30,
+                              fontWeight: FontWeight.w900,
+                              color: _ink,
+                              letterSpacing: -1)),
                       SizedBox(height: 4),
-                      Text('Your shop at a glance.', style: TextStyle(color: _muted)),
+                      Text('Your shop at a glance.',
+                          style: TextStyle(color: _muted)),
                     ],
                   ),
                 ),
@@ -332,22 +369,43 @@ class _HomePageState extends State<HomePage> {
             const SizedBox(height: 10),
             LayoutBuilder(
               builder: (_, c) {
-                final columns = c.maxWidth >= 1100 ? 4 : c.maxWidth >= 650 ? 2 : 1;
+                final columns = c.maxWidth >= 1100
+                    ? 4
+                    : c.maxWidth >= 650
+                        ? 2
+                        : 1;
                 final width = (c.maxWidth - (columns - 1) * 12) / columns;
                 return Wrap(
                   spacing: 12,
                   runSpacing: 12,
                   children: [
-                    SizedBox(width: width, child: _Metric('Total sales', money(sales), Icons.trending_up_rounded, _teal)),
-                    SizedBox(width: width, child: _Metric('Purchases', money(purchases), Icons.shopping_bag_outlined, _purple)),
-                    SizedBox(width: width, child: _Metric('Inventory value', money(value), Icons.inventory_2_outlined, _primary, note: '${products.length} products')),
-                    SizedBox(width: width, child: _Metric('Low stock', '${low.length}', Icons.warning_amber_rounded, _orange, note: 'Needs attention')),
+                    SizedBox(
+                        width: width,
+                        child: _Metric('Total sales', money(sales),
+                            Icons.trending_up_rounded, _teal)),
+                    SizedBox(
+                        width: width,
+                        child: _Metric('Purchases', money(purchases),
+                            Icons.shopping_bag_outlined, _purple)),
+                    SizedBox(
+                        width: width,
+                        child: _Metric('Inventory value', money(value),
+                            Icons.inventory_2_outlined, _primary,
+                            note: '${products.length} products')),
+                    SizedBox(
+                        width: width,
+                        child: _Metric('Low stock', '${low.length}',
+                            Icons.warning_amber_rounded, _orange,
+                            note: 'Needs attention')),
                   ],
                 );
               },
             ),
             const SizedBox(height: 24),
-            _SectionTitle(title: 'Categories', action: 'View inventory', onAction: widget.onInventory),
+            _SectionTitle(
+                title: 'Categories',
+                action: 'View inventory',
+                onAction: widget.onInventory),
             const SizedBox(height: 10),
             SizedBox(
               height: 112,
@@ -355,14 +413,18 @@ class _HomePageState extends State<HomePage> {
                 scrollDirection: Axis.horizontal,
                 itemCount: _categories.length,
                 separatorBuilder: (_, __) => const SizedBox(width: 10),
-                itemBuilder: (_, i) => _CategoryCard(_categories[i].$1, _categories[i].$2, _categories[i].$3),
+                itemBuilder: (_, i) => _CategoryCard(
+                    _categories[i].$1, _categories[i].$2, _categories[i].$3),
               ),
             ),
             const SizedBox(height: 24),
             const _SectionTitle(title: 'Low stock'),
             const SizedBox(height: 10),
             if (low.isEmpty)
-              const _EmptyCard(icon: Icons.check_circle_outline_rounded, title: 'Stock looks healthy', subtitle: 'No products need attention right now.')
+              const _EmptyCard(
+                  icon: Icons.check_circle_outline_rounded,
+                  title: 'Stock looks healthy',
+                  subtitle: 'No products need attention right now.')
             else
               for (final product in low) _LowStockTile(product: product),
             const SizedBox(height: 24),
@@ -371,15 +433,22 @@ class _HomePageState extends State<HomePage> {
             SizedBox(
               height: 246,
               child: products.isEmpty
-                  ? const _EmptyCard(icon: Icons.devices_other_outlined, title: 'No products yet', subtitle: 'Add your first product from Inventory.')
+                  ? const _EmptyCard(
+                      icon: Icons.devices_other_outlined,
+                      title: 'No products yet',
+                      subtitle: 'Add your first product from Inventory.')
                   : ListView.separated(
                       scrollDirection: Axis.horizontal,
                       itemCount: products.length > 8 ? 8 : products.length,
                       separatorBuilder: (_, __) => const SizedBox(width: 12),
-                      itemBuilder: (_, i) => SizedBox(width: 205, child: ProductCard(products[i])),
+                      itemBuilder: (_, i) =>
+                          SizedBox(width: 205, child: ProductCard(products[i])),
                     ),
             ),
-            if (loading) const Padding(padding: EdgeInsets.only(top: 10), child: LinearProgressIndicator(minHeight: 2)),
+            if (loading)
+              const Padding(
+                  padding: EdgeInsets.only(top: 10),
+                  child: LinearProgressIndicator(minHeight: 2)),
           ],
         ),
       ),
@@ -391,11 +460,20 @@ class _HomePageState extends State<HomePage> {
     await showDialog<void>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Find by barcode', style: TextStyle(fontWeight: FontWeight.w900)),
-        content: TextField(controller: controller, autofocus: true, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Barcode / SKU')),
+        title: const Text('Find by barcode',
+            style: TextStyle(fontWeight: FontWeight.w900)),
+        content: TextField(
+            controller: controller,
+            autofocus: true,
+            keyboardType: TextInputType.number,
+            decoration: const InputDecoration(labelText: 'Barcode / SKU')),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-          FilledButton(onPressed: () => Navigator.pop(context), child: const Text('Search')),
+          TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel')),
+          FilledButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Search')),
         ],
       ),
     );
@@ -408,8 +486,13 @@ class _StoreChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 10),
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(15)),
-        child: const Row(children: [Icon(Icons.storefront_rounded, size: 18, color: _primary), SizedBox(width: 7), Text('Main Store', style: TextStyle(fontWeight: FontWeight.w800))]),
+        decoration: BoxDecoration(
+            color: Colors.white, borderRadius: BorderRadius.circular(15)),
+        child: const Row(children: [
+          Icon(Icons.storefront_rounded, size: 18, color: _primary),
+          SizedBox(width: 7),
+          Text('Main Store', style: TextStyle(fontWeight: FontWeight.w800))
+        ]),
       );
 }
 
@@ -430,19 +513,34 @@ class _HeroBanner extends StatelessWidget {
             Container(
               width: 50,
               height: 50,
-              decoration: BoxDecoration(color: Colors.white.withAlpha(25), borderRadius: BorderRadius.circular(15)),
-              child: const Icon(Icons.auto_awesome_rounded, color: Colors.white),
+              decoration: BoxDecoration(
+                  color: Colors.white.withAlpha(25),
+                  borderRadius: BorderRadius.circular(15)),
+              child:
+                  const Icon(Icons.auto_awesome_rounded, color: Colors.white),
             ),
             const SizedBox(width: 13),
             Expanded(
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                const Text('Everything in one place', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900)),
-                const SizedBox(height: 3),
-                Text('$products products • inventory, POS and stock control', style: TextStyle(color: Colors.white.withAlpha(205), fontSize: 12)),
-              ]),
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Everything in one place',
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w900)),
+                    const SizedBox(height: 3),
+                    Text(
+                        '$products products • inventory, POS and stock control',
+                        style: TextStyle(
+                            color: Colors.white.withAlpha(205), fontSize: 12)),
+                  ]),
             ),
             if (MediaQuery.sizeOf(context).width > 600)
-              FilledButton.tonalIcon(onPressed: onAdd, icon: const Icon(Icons.add_rounded), label: const Text('Add product')),
+              FilledButton.tonalIcon(
+                  onPressed: onAdd,
+                  icon: const Icon(Icons.add_rounded),
+                  label: const Text('Add product')),
           ],
         ),
       );
@@ -461,14 +559,30 @@ class _Metric extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Row(children: [
-            Container(width: 44, height: 44, decoration: BoxDecoration(color: accent.withAlpha(18), borderRadius: BorderRadius.circular(14)), child: Icon(icon, color: accent)),
+            Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                    color: accent.withAlpha(18),
+                    borderRadius: BorderRadius.circular(14)),
+                child: Icon(icon, color: accent)),
             const SizedBox(width: 11),
-            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(title, style: const TextStyle(color: _muted, fontSize: 12)),
-              const SizedBox(height: 3),
-              Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: _ink)),
-              if (note != null) Text(note!, style: const TextStyle(color: _muted, fontSize: 10)),
-            ])),
+            Expanded(
+                child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                  Text(title,
+                      style: const TextStyle(color: _muted, fontSize: 12)),
+                  const SizedBox(height: 3),
+                  Text(value,
+                      style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w900,
+                          color: _ink)),
+                  if (note != null)
+                    Text(note!,
+                        style: const TextStyle(color: _muted, fontSize: 10)),
+                ])),
           ]),
         ),
       );
@@ -481,8 +595,10 @@ class _SectionTitle extends StatelessWidget {
   const _SectionTitle({required this.title, this.action, this.onAction});
   @override
   Widget build(BuildContext context) => Row(children: [
-        Expanded(child: Text(title, style: Theme.of(context).textTheme.titleLarge)),
-        if (action != null) TextButton(onPressed: onAction, child: Text(action!)),
+        Expanded(
+            child: Text(title, style: Theme.of(context).textTheme.titleLarge)),
+        if (action != null)
+          TextButton(onPressed: onAction, child: Text(action!)),
       ]);
 }
 
@@ -495,11 +611,24 @@ class _CategoryCard extends StatelessWidget {
   Widget build(BuildContext context) => Container(
         width: 148,
         padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(19), border: Border.all(color: accent.withAlpha(28))),
+        decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(19),
+            border: Border.all(color: accent.withAlpha(28))),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Container(width: 40, height: 40, decoration: BoxDecoration(color: accent.withAlpha(18), borderRadius: BorderRadius.circular(13)), child: Icon(icon, color: accent, size: 21)),
+          Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                  color: accent.withAlpha(18),
+                  borderRadius: BorderRadius.circular(13)),
+              child: Icon(icon, color: accent, size: 21)),
           const Spacer(),
-          Text(name, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12)),
+          Text(name,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style:
+                  const TextStyle(fontWeight: FontWeight.w800, fontSize: 12)),
         ]),
       );
 }
@@ -511,10 +640,14 @@ class _LowStockTile extends StatelessWidget {
   Widget build(BuildContext context) => Card(
         margin: const EdgeInsets.only(bottom: 8),
         child: ListTile(
-          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
           leading: ProductImage(product: product, size: 46, radius: 13),
-          title: Text('${product.brand} · ${product.name}', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
-          subtitle: Text('${product.quantity} units left • ${product.sku}', style: const TextStyle(fontSize: 11)),
+          title: Text('${product.brand} · ${product.name}',
+              style:
+                  const TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
+          subtitle: Text('${product.quantity} units left • ${product.sku}',
+              style: const TextStyle(fontSize: 11)),
           trailing: StatusBadge(product.status),
         ),
       );
@@ -524,29 +657,52 @@ class _EmptyCard extends StatelessWidget {
   final IconData icon;
   final String title;
   final String subtitle;
-  const _EmptyCard({required this.icon, required this.title, required this.subtitle});
+  const _EmptyCard(
+      {required this.icon, required this.title, required this.subtitle});
   @override
   Widget build(BuildContext context) => Card(
         child: Padding(
           padding: const EdgeInsets.all(22),
           child: Row(children: [
-            Container(width: 48, height: 48, decoration: BoxDecoration(color: _bg, borderRadius: BorderRadius.circular(14)), child: Icon(icon, color: _muted)),
+            Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                    color: _bg, borderRadius: BorderRadius.circular(14)),
+                child: Icon(icon, color: _muted)),
             const SizedBox(width: 14),
-            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(title, style: const TextStyle(fontWeight: FontWeight.w800)), const SizedBox(height: 3), Text(subtitle, style: const TextStyle(color: _muted, fontSize: 12))])),
+            Expanded(
+                child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                  Text(title,
+                      style: const TextStyle(fontWeight: FontWeight.w800)),
+                  const SizedBox(height: 3),
+                  Text(subtitle,
+                      style: const TextStyle(color: _muted, fontSize: 12))
+                ])),
           ]),
         ),
       );
+}
 
 class StatusBadge extends StatelessWidget {
   final String status;
   const StatusBadge(this.status, {super.key});
   @override
   Widget build(BuildContext context) {
-    final color = status == 'IN STOCK' ? _teal : status == 'LOW STOCK' ? _orange : _red;
+    final color = status == 'IN STOCK'
+        ? _teal
+        : status == 'LOW STOCK'
+            ? _orange
+            : _red;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
-      decoration: BoxDecoration(color: color.withAlpha(18), borderRadius: BorderRadius.circular(30)),
-      child: Text(status, style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.w900)),
+      decoration: BoxDecoration(
+          color: color.withAlpha(18), borderRadius: BorderRadius.circular(30)),
+      child: Text(status,
+          style: TextStyle(
+              color: color, fontSize: 10, fontWeight: FontWeight.w900)),
     );
   }
 }
@@ -555,7 +711,8 @@ class ProductImage extends StatefulWidget {
   final Product product;
   final double size;
   final double radius;
-  const ProductImage({super.key, required this.product, this.size = 120, this.radius = 18});
+  const ProductImage(
+      {super.key, required this.product, this.size = 120, this.radius = 18});
   @override
   State<ProductImage> createState() => _ProductImageState();
 }
@@ -572,8 +729,10 @@ class _ProductImageState extends State<ProductImage> {
   }
 
   Future<void> _lookup() async {
-    final found = await ProductCatalogService.findImage('${widget.product.brand} ${widget.product.name} ${widget.product.model}');
-    if (mounted && found != null && found.isNotEmpty) setState(() => url = found);
+    final found = await ProductCatalogService.findImage(
+        '${widget.product.brand} ${widget.product.name} ${widget.product.model}');
+    if (mounted && found != null && found.isNotEmpty)
+      setState(() => url = found);
   }
 
   @override
@@ -581,8 +740,11 @@ class _ProductImageState extends State<ProductImage> {
     final fallback = Container(
       width: widget.size,
       height: widget.size,
-      decoration: BoxDecoration(color: const Color(0xFFF3F5FA), borderRadius: BorderRadius.circular(widget.radius)),
-      child: Icon(categoryIcon(widget.product.category), size: widget.size * .35, color: _ink),
+      decoration: BoxDecoration(
+          color: const Color(0xFFF3F5FA),
+          borderRadius: BorderRadius.circular(widget.radius)),
+      child: Icon(categoryIcon(widget.product.category),
+          size: widget.size * .35, color: _ink),
     );
     if (url == null || url!.isEmpty) return fallback;
     return ClipRRect(
@@ -593,7 +755,8 @@ class _ProductImageState extends State<ProductImage> {
         height: widget.size,
         fit: BoxFit.contain,
         errorBuilder: (_, __, ___) => fallback,
-        loadingBuilder: (_, child, progress) => progress == null ? child : fallback,
+        loadingBuilder: (_, child, progress) =>
+            progress == null ? child : fallback,
       ),
     );
   }
@@ -610,14 +773,30 @@ class ProductCard extends StatelessWidget {
           onTap: onTap,
           child: Padding(
             padding: const EdgeInsets.all(12),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Expanded(child: ProductImage(product: product, size: 180, radius: 17)),
+            child:
+                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Expanded(
+                  child: ProductImage(product: product, size: 180, radius: 17)),
               const SizedBox(height: 10),
-              Text(product.brand, style: const TextStyle(color: _muted, fontSize: 11, fontWeight: FontWeight.w700)),
+              Text(product.brand,
+                  style: const TextStyle(
+                      color: _muted,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700)),
               const SizedBox(height: 2),
-              Text(product.name, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14)),
+              Text(product.name,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                      fontWeight: FontWeight.w900, fontSize: 14)),
               const SizedBox(height: 7),
-              Row(children: [Expanded(child: Text(money(product.sellingPrice), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 17))), StatusBadge(product.status)]),
+              Row(children: [
+                Expanded(
+                    child: Text(money(product.sellingPrice),
+                        style: const TextStyle(
+                            fontWeight: FontWeight.w900, fontSize: 17))),
+                StatusBadge(product.status)
+              ]),
             ]),
           ),
         ),
@@ -645,20 +824,29 @@ class _InventoryPageState extends State<InventoryPage> {
 
   Future<void> load() async {
     try {
-      final result = await AppDatabase.instance.products(query: query, category: widget.category);
+      final result = await AppDatabase.instance
+          .products(query: query, category: widget.category);
       if (!mounted) return;
       setState(() {
         items = result;
         loading = false;
       });
     } catch (_) {
-      if (mounted) setState(() { items = []; loading = false; });
+      if (mounted)
+        setState(() {
+          items = [];
+          loading = false;
+        });
     }
   }
 
   List<Product> get visible {
-    if (filter == 'Low stock') return items.where((p) => p.quantity > 0 && p.quantity <= p.minimumStock).toList();
-    if (filter == 'Out of stock') return items.where((p) => p.quantity == 0).toList();
+    if (filter == 'Low stock')
+      return items
+          .where((p) => p.quantity > 0 && p.quantity <= p.minimumStock)
+          .toList();
+    if (filter == 'Out of stock')
+      return items.where((p) => p.quantity == 0).toList();
     return items;
   }
 
@@ -668,16 +856,28 @@ class _InventoryPageState extends State<InventoryPage> {
           PageHeader(
             title: widget.category ?? 'Inventory',
             subtitle: '${visible.length} products in your catalog',
-            action: FilledButton.icon(onPressed: () => _showProductForm(context), icon: const Icon(Icons.add_rounded), label: const Text('Add product')),
+            action: FilledButton.icon(
+                onPressed: () => _showProductForm(context),
+                icon: const Icon(Icons.add_rounded),
+                label: const Text('Add product')),
           ),
           const SizedBox(height: 16),
-          SearchBox(hint: 'Search products, brands, models, SKU or barcode', onChanged: (v) { query = v; load(); }, onScan: () => _showBarcodeSearch(context)),
+          SearchBox(
+              hint: 'Search products, brands, models, SKU or barcode',
+              onChanged: (v) {
+                query = v;
+                load();
+              },
+              onScan: () => _showBarcodeSearch(context)),
           const SizedBox(height: 12),
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(children: [
               for (final value in ['All', 'Low stock', 'Out of stock']) ...[
-                ChoiceChip(label: Text(value == 'All' ? 'All products' : value), selected: filter == value, onSelected: (_) => setState(() => filter = value)),
+                ChoiceChip(
+                    label: Text(value == 'All' ? 'All products' : value),
+                    selected: filter == value,
+                    onSelected: (_) => setState(() => filter = value)),
                 const SizedBox(width: 8),
               ],
             ]),
@@ -687,13 +887,27 @@ class _InventoryPageState extends State<InventoryPage> {
             child: loading
                 ? const Center(child: CircularProgressIndicator())
                 : visible.isEmpty
-                    ? const _EmptyCard(icon: Icons.inventory_2_outlined, title: 'No products found', subtitle: 'Try another search or add a new product.')
+                    ? const _EmptyCard(
+                        icon: Icons.inventory_2_outlined,
+                        title: 'No products found',
+                        subtitle: 'Try another search or add a new product.')
                     : LayoutBuilder(builder: (_, c) {
-                        final columns = c.maxWidth >= 1250 ? 4 : c.maxWidth >= 760 ? 3 : 2;
+                        final columns = c.maxWidth >= 1250
+                            ? 4
+                            : c.maxWidth >= 760
+                                ? 3
+                                : 2;
                         return GridView.builder(
                           itemCount: visible.length,
-                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: columns, crossAxisSpacing: 13, mainAxisSpacing: 13, childAspectRatio: .76),
-                          itemBuilder: (_, i) => ProductCard(visible[i], onTap: () => showProductDetails(context, visible[i], load)),
+                          gridDelegate:
+                              SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: columns,
+                                  crossAxisSpacing: 13,
+                                  mainAxisSpacing: 13,
+                                  childAspectRatio: .76),
+                          itemBuilder: (_, i) => ProductCard(visible[i],
+                              onTap: () => showProductDetails(
+                                  context, visible[i], load)),
                         );
                       }),
           ),
@@ -701,14 +915,19 @@ class _InventoryPageState extends State<InventoryPage> {
       );
 
   Future<void> _showProductForm(BuildContext context) async {
-    final draft = await showDialog<_ProductDraft>(context: context, builder: (_) => const _ProductFormDialog());
+    final draft = await showDialog<_ProductDraft>(
+        context: context, builder: (_) => const _ProductFormDialog());
     if (draft == null) return;
     try {
       await AppDatabase.instance.addProduct(draft.toMap());
       await load();
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Product added to inventory.')));
+      if (mounted)
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Product added to inventory.')));
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Could not save product: $e')));
+      if (mounted)
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Could not save product: $e')));
     }
   }
 
@@ -717,13 +936,27 @@ class _InventoryPageState extends State<InventoryPage> {
     final value = await showDialog<String>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Scan / enter barcode', style: TextStyle(fontWeight: FontWeight.w900)),
-        content: TextField(controller: c, autofocus: true, decoration: const InputDecoration(labelText: 'Barcode or SKU')),
-        actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')), FilledButton(onPressed: () => Navigator.pop(context, c.text.trim()), child: const Text('Find'))],
+        title: const Text('Scan / enter barcode',
+            style: TextStyle(fontWeight: FontWeight.w900)),
+        content: TextField(
+            controller: c,
+            autofocus: true,
+            decoration: const InputDecoration(labelText: 'Barcode or SKU')),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel')),
+          FilledButton(
+              onPressed: () => Navigator.pop(context, c.text.trim()),
+              child: const Text('Find'))
+        ],
       ),
     );
     c.dispose();
-    if (value != null && value.isNotEmpty) { query = value; load(); }
+    if (value != null && value.isNotEmpty) {
+      query = value;
+      load();
+    }
   }
 }
 
@@ -731,7 +964,18 @@ class _ProductDraft {
   final String name, brand, category, model, sku, imageUrl;
   final double purchase, selling, mrp;
   final int quantity, minimum;
-  const _ProductDraft({required this.name, required this.brand, required this.category, required this.model, required this.sku, required this.imageUrl, required this.purchase, required this.selling, required this.mrp, required this.quantity, required this.minimum});
+  const _ProductDraft(
+      {required this.name,
+      required this.brand,
+      required this.category,
+      required this.model,
+      required this.sku,
+      required this.imageUrl,
+      required this.purchase,
+      required this.selling,
+      required this.mrp,
+      required this.quantity,
+      required this.minimum});
   Map<String, Object?> toMap() => {
         'name': name,
         'brand': brand,
@@ -770,7 +1014,8 @@ class _ProductFormDialogState extends State<_ProductFormDialog> {
   final formKey = GlobalKey<FormState>();
   final name = TextEditingController();
   final model = TextEditingController();
-  final sku = TextEditingController(text: 'NEW-${DateTime.now().millisecondsSinceEpoch % 100000}');
+  final sku = TextEditingController(
+      text: 'NEW-${DateTime.now().millisecondsSinceEpoch % 100000}');
   final purchase = TextEditingController();
   final selling = TextEditingController();
   final mrp = TextEditingController();
@@ -782,20 +1027,100 @@ class _ProductFormDialogState extends State<_ProductFormDialog> {
   List<ProductSuggestion> suggestions = const [];
   bool searching = false;
 
-  static const brands = ['Samsung','LG','Sony','Apple','OnePlus','Motorola','Xiaomi','HP','Dell','Lenovo','ASUS','Acer','MSI','Whirlpool','IFB','Bosch','Haier','Voltas','Daikin','Blue Star','JBL','boAt','Bose','Canon','Nikon','Epson','TP-Link','D-Link','Tenda','Logitech','Razer','Kingston','SanDisk','Seagate','Western Digital','Philips','Havells','Bajaj','Crompton','Oppo','Realme'];
-  static const categories = ['Mobile Phones','Laptops','Televisions','Refrigerators','Air Conditioners','Washing Machines','Audio','Cameras','Printers','Networking','Storage','Accessories','Monitors','Gaming','Smartwatches','Kitchen Appliances','Fans','Coolers','Projectors','Power & Cables'];
+  static const brands = [
+    'Samsung',
+    'LG',
+    'Sony',
+    'Apple',
+    'OnePlus',
+    'Motorola',
+    'Xiaomi',
+    'HP',
+    'Dell',
+    'Lenovo',
+    'ASUS',
+    'Acer',
+    'MSI',
+    'Whirlpool',
+    'IFB',
+    'Bosch',
+    'Haier',
+    'Voltas',
+    'Daikin',
+    'Blue Star',
+    'JBL',
+    'boAt',
+    'Bose',
+    'Canon',
+    'Nikon',
+    'Epson',
+    'TP-Link',
+    'D-Link',
+    'Tenda',
+    'Logitech',
+    'Razer',
+    'Kingston',
+    'SanDisk',
+    'Seagate',
+    'Western Digital',
+    'Philips',
+    'Havells',
+    'Bajaj',
+    'Crompton',
+    'Oppo',
+    'Realme'
+  ];
+  static const categories = [
+    'Mobile Phones',
+    'Laptops',
+    'Televisions',
+    'Refrigerators',
+    'Air Conditioners',
+    'Washing Machines',
+    'Audio',
+    'Cameras',
+    'Printers',
+    'Networking',
+    'Storage',
+    'Accessories',
+    'Monitors',
+    'Gaming',
+    'Smartwatches',
+    'Kitchen Appliances',
+    'Fans',
+    'Coolers',
+    'Projectors',
+    'Power & Cables'
+  ];
 
   @override
   void dispose() {
-    for (final c in [name, model, sku, purchase, selling, mrp, quantity, minimum]) c.dispose();
+    for (final c in [
+      name,
+      model,
+      sku,
+      purchase,
+      selling,
+      mrp,
+      quantity,
+      minimum
+    ]) c.dispose();
     super.dispose();
   }
 
   Future<void> searchInternet(String value) async {
-    if (value.trim().length < 3) { if (mounted) setState(() => suggestions = const []); return; }
+    if (value.trim().length < 3) {
+      if (mounted) setState(() => suggestions = const []);
+      return;
+    }
     setState(() => searching = true);
-    final result = await ProductCatalogService.suggest(query: value, brand: brand, category: category);
-    if (mounted) setState(() { suggestions = result; searching = false; });
+    final result = await ProductCatalogService.suggest(
+        query: value, brand: brand, category: category);
+    if (mounted)
+      setState(() {
+        suggestions = result;
+        searching = false;
+      });
   }
 
   void choose(ProductSuggestion item) {
@@ -807,11 +1132,19 @@ class _ProductFormDialogState extends State<_ProductFormDialog> {
 
   @override
   Widget build(BuildContext context) => AlertDialog(
-        title: const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text('Add product', style: TextStyle(fontWeight: FontWeight.w900)),
-          SizedBox(height: 3),
-          Text('Choose product type and brand first. Then search the internet for the model.', style: TextStyle(fontSize: 12, color: _muted, fontWeight: FontWeight.normal)),
-        ]),
+        title: const Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Add product',
+                  style: TextStyle(fontWeight: FontWeight.w900)),
+              SizedBox(height: 3),
+              Text(
+                  'Choose product type and brand first. Then search the internet for the model.',
+                  style: TextStyle(
+                      fontSize: 12,
+                      color: _muted,
+                      fontWeight: FontWeight.normal)),
+            ]),
         content: SizedBox(
           width: 650,
           child: Form(
@@ -819,35 +1152,77 @@ class _ProductFormDialogState extends State<_ProductFormDialog> {
             child: SingleChildScrollView(
               child: Column(children: [
                 Row(children: [
-                  Expanded(child: _dropdown('Product type', category, categories, (v) => setState(() => category = v!))),
+                  Expanded(
+                      child: _dropdown('Product type', category, categories,
+                          (v) => setState(() => category = v!))),
                   const SizedBox(width: 10),
-                  Expanded(child: _dropdown('Brand', brand, brands, (v) => setState(() => brand = v!))),
+                  Expanded(
+                      child: _dropdown('Brand', brand, brands,
+                          (v) => setState(() => brand = v!))),
                 ]),
                 const SizedBox(height: 10),
                 TextFormField(
                   controller: name,
                   onChanged: searchInternet,
-                  validator: (v) => v == null || v.trim().isEmpty ? 'Enter a product/model name' : null,
-                  decoration: const InputDecoration(labelText: 'Product / model name', hintText: 'e.g. Galaxy S25 Ultra', prefixIcon: Icon(Icons.auto_awesome_rounded)),
+                  validator: (v) => v == null || v.trim().isEmpty
+                      ? 'Enter a product/model name'
+                      : null,
+                  decoration: const InputDecoration(
+                      labelText: 'Product / model name',
+                      hintText: 'e.g. Galaxy S25 Ultra',
+                      prefixIcon: Icon(Icons.auto_awesome_rounded)),
                 ),
-                if (searching) const Padding(padding: EdgeInsets.only(top: 8), child: LinearProgressIndicator(minHeight: 2)),
+                if (searching)
+                  const Padding(
+                      padding: EdgeInsets.only(top: 8),
+                      child: LinearProgressIndicator(minHeight: 2)),
                 if (suggestions.isNotEmpty)
                   Container(
                     margin: const EdgeInsets.only(top: 8, bottom: 8),
-                    decoration: BoxDecoration(color: const Color(0xFFF8F9FD), borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFE4E7F0))),
+                    decoration: BoxDecoration(
+                        color: const Color(0xFFF8F9FD),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: const Color(0xFFE4E7F0))),
                     child: Column(children: [
-                      const ListTile(dense: true, leading: Icon(Icons.language_rounded, color: _primary), title: Text('Internet suggestions', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13)), subtitle: Text('Choose a result to fill the model and real image.', style: TextStyle(fontSize: 11))),
+                      const ListTile(
+                          dense: true,
+                          leading:
+                              Icon(Icons.language_rounded, color: _primary),
+                          title: Text('Internet suggestions',
+                              style: TextStyle(
+                                  fontWeight: FontWeight.w900, fontSize: 13)),
+                          subtitle: Text(
+                              'Choose a result to fill the model and real image.',
+                              style: TextStyle(fontSize: 11))),
                       for (final item in suggestions.take(4))
                         ListTile(
                           onTap: () => choose(item),
-                          leading: item.imageUrl.isEmpty ? const CircleAvatar(child: Icon(Icons.devices_other_rounded)) : CircleAvatar(backgroundImage: NetworkImage(item.imageUrl)),
-                          title: Text(item.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w800)),
-                          subtitle: Text(item.description.isEmpty ? 'Internet catalog result' : item.description, maxLines: 2, overflow: TextOverflow.ellipsis),
-                          trailing: const Icon(Icons.add_circle_outline_rounded, color: _primary),
+                          leading: item.imageUrl.isEmpty
+                              ? const CircleAvatar(
+                                  child: Icon(Icons.devices_other_rounded))
+                              : CircleAvatar(
+                                  backgroundImage: NetworkImage(item.imageUrl)),
+                          title: Text(item.title,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.w800)),
+                          subtitle: Text(
+                              item.description.isEmpty
+                                  ? 'Internet catalog result'
+                                  : item.description,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis),
+                          trailing: const Icon(Icons.add_circle_outline_rounded,
+                              color: _primary),
                         ),
                     ]),
                   ),
-                Row(children: [Expanded(child: _field(model, 'Model / variant')), const SizedBox(width: 10), Expanded(child: _field(sku, 'SKU'))]),
+                Row(children: [
+                  Expanded(child: _field(model, 'Model / variant')),
+                  const SizedBox(width: 10),
+                  Expanded(child: _field(sku, 'SKU'))
+                ]),
                 if (imageUrl.isNotEmpty)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 10),
@@ -855,26 +1230,56 @@ class _ProductFormDialogState extends State<_ProductFormDialog> {
                       height: 150,
                       width: double.infinity,
                       clipBehavior: Clip.antiAlias,
-                      decoration: BoxDecoration(color: const Color(0xFFF3F5FA), borderRadius: BorderRadius.circular(17)),
-                      child: Image.network(imageUrl, fit: BoxFit.contain, errorBuilder: (_, __, ___) => const Center(child: Icon(Icons.image_not_supported_outlined))),
+                      decoration: BoxDecoration(
+                          color: const Color(0xFFF3F5FA),
+                          borderRadius: BorderRadius.circular(17)),
+                      child: Image.network(imageUrl,
+                          fit: BoxFit.contain,
+                          errorBuilder: (_, __, ___) => const Center(
+                              child: Icon(Icons.image_not_supported_outlined))),
                     ),
                   ),
-                Row(children: [Expanded(child: _field(purchase, 'Purchase price', number: true)), const SizedBox(width: 10), Expanded(child: _field(selling, 'Selling price', number: true))]),
-                Row(children: [Expanded(child: _field(mrp, 'MRP', number: true)), const SizedBox(width: 10), Expanded(child: _field(quantity, 'Opening stock', number: true)), const SizedBox(width: 10), Expanded(child: _field(minimum, 'Min. stock', number: true))]),
+                Row(children: [
+                  Expanded(
+                      child: _field(purchase, 'Purchase price', number: true)),
+                  const SizedBox(width: 10),
+                  Expanded(
+                      child: _field(selling, 'Selling price', number: true))
+                ]),
+                Row(children: [
+                  Expanded(child: _field(mrp, 'MRP', number: true)),
+                  const SizedBox(width: 10),
+                  Expanded(
+                      child: _field(quantity, 'Opening stock', number: true)),
+                  const SizedBox(width: 10),
+                  Expanded(child: _field(minimum, 'Min. stock', number: true))
+                ]),
               ]),
             ),
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel')),
           FilledButton.icon(
             onPressed: () {
               if (!formKey.currentState!.validate()) return;
-              Navigator.pop(context, _ProductDraft(
-                name: name.text.trim(), brand: brand, category: category, model: model.text.trim(), sku: sku.text.trim(), imageUrl: imageUrl,
-                purchase: double.tryParse(purchase.text) ?? 0, selling: double.tryParse(selling.text) ?? 0, mrp: double.tryParse(mrp.text) ?? 0,
-                quantity: int.tryParse(quantity.text) ?? 0, minimum: int.tryParse(minimum.text) ?? 2,
-              ));
+              Navigator.pop(
+                  context,
+                  _ProductDraft(
+                    name: name.text.trim(),
+                    brand: brand,
+                    category: category,
+                    model: model.text.trim(),
+                    sku: sku.text.trim(),
+                    imageUrl: imageUrl,
+                    purchase: double.tryParse(purchase.text) ?? 0,
+                    selling: double.tryParse(selling.text) ?? 0,
+                    mrp: double.tryParse(mrp.text) ?? 0,
+                    quantity: int.tryParse(quantity.text) ?? 0,
+                    minimum: int.tryParse(minimum.text) ?? 2,
+                  ));
             },
             icon: const Icon(Icons.check_rounded),
             label: const Text('Save product'),
@@ -882,19 +1287,29 @@ class _ProductFormDialogState extends State<_ProductFormDialog> {
         ],
       );
 
-  Widget _dropdown(String label, String value, List<String> values, ValueChanged<String?> onChanged) => DropdownButtonFormField<String>(
+  Widget _dropdown(String label, String value, List<String> values,
+          ValueChanged<String?> onChanged) =>
+      DropdownButtonFormField<String>(
         initialValue: value,
         isExpanded: true,
         decoration: InputDecoration(labelText: label),
-        items: [for (final item in values) DropdownMenuItem(value: item, child: Text(item, overflow: TextOverflow.ellipsis))],
+        items: [
+          for (final item in values)
+            DropdownMenuItem(
+                value: item, child: Text(item, overflow: TextOverflow.ellipsis))
+        ],
         onChanged: onChanged,
       );
 
-  Widget _field(TextEditingController controller, String label, {bool number = false}) => Padding(
+  Widget _field(TextEditingController controller, String label,
+          {bool number = false}) =>
+      Padding(
         padding: const EdgeInsets.only(bottom: 10),
         child: TextFormField(
           controller: controller,
-          keyboardType: number ? const TextInputType.numberWithOptions(decimal: true) : null,
+          keyboardType: number
+              ? const TextInputType.numberWithOptions(decimal: true)
+              : null,
           validator: (v) => v == null || v.trim().isEmpty ? 'Required' : null,
           decoration: InputDecoration(labelText: label),
         ),
@@ -913,13 +1328,18 @@ class _SalesPageState extends State<SalesPage> {
   String query = '';
 
   @override
-  void initState() { super.initState(); load(); }
+  void initState() {
+    super.initState();
+    load();
+  }
 
   Future<void> load() async {
     try {
       final r = await AppDatabase.instance.products(query: query);
       if (mounted) setState(() => products = r);
-    } catch (_) { if (mounted) setState(() => products = []); }
+    } catch (_) {
+      if (mounted) setState(() => products = []);
+    }
   }
 
   void add(Product p) {
@@ -929,12 +1349,21 @@ class _SalesPageState extends State<SalesPage> {
       final q = cart[i]['quantity'] as int;
       if (q < p.quantity) cart[i]['quantity'] = q + 1;
     } else {
-      cart.add({'product_id': p.id, 'quantity': 1, 'price': p.sellingPrice, 'name': p.name, 'image_url': p.imageUrl});
+      cart.add({
+        'product_id': p.id,
+        'quantity': 1,
+        'price': p.sellingPrice,
+        'name': p.name,
+        'image_url': p.imageUrl
+      });
     }
     setState(() {});
   }
 
-  double get total => cart.fold<double>(0, (sum, x) => sum + (x['price'] as num).toDouble() * (x['quantity'] as int));
+  double get total => cart.fold<double>(
+      0,
+      (sum, x) =>
+          sum + (x['price'] as num).toDouble() * (x['quantity'] as int));
 
   Future<void> checkout() async {
     try {
@@ -942,9 +1371,12 @@ class _SalesPageState extends State<SalesPage> {
       if (!mounted) return;
       setState(cart.clear);
       await load();
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Sale completed and stock updated.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Sale completed and stock updated.')));
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+      if (mounted)
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(e.toString())));
     }
   }
 
@@ -953,42 +1385,110 @@ class _SalesPageState extends State<SalesPage> {
     final wide = MediaQuery.sizeOf(context).width >= 950;
     return Frame(
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const PageHeader(title: 'Sales', subtitle: 'Fast point of sale for your shop'),
+        const PageHeader(
+            title: 'Sales', subtitle: 'Fast point of sale for your shop'),
         const SizedBox(height: 15),
-        SearchBox(hint: 'Search product to add to order', onChanged: (v) { query = v; load(); }, onScan: () => _barcodeSearch(context)),
+        SearchBox(
+            hint: 'Search product to add to order',
+            onChanged: (v) {
+              query = v;
+              load();
+            },
+            onScan: () => _barcodeSearch(context)),
         const SizedBox(height: 13),
         Expanded(
           child: wide
-              ? Row(children: [Expanded(child: _salesGrid()), const SizedBox(width: 14), SizedBox(width: 330, child: _CartPanel(cart: cart, total: total, onRemove: (i) => setState(() => cart.removeAt(i)), onCheckout: checkout))])
-              : Column(children: [Expanded(child: _salesGrid()), const SizedBox(height: 10), _CartButton(total: total, enabled: cart.isNotEmpty, onTap: () => _showMobileCart(context))]),
+              ? Row(children: [
+                  Expanded(child: _salesGrid()),
+                  const SizedBox(width: 14),
+                  SizedBox(
+                      width: 330,
+                      child: _CartPanel(
+                          cart: cart,
+                          total: total,
+                          onRemove: (i) => setState(() => cart.removeAt(i)),
+                          onCheckout: checkout))
+                ])
+              : Column(children: [
+                  Expanded(child: _salesGrid()),
+                  const SizedBox(height: 10),
+                  _CartButton(
+                      total: total,
+                      enabled: cart.isNotEmpty,
+                      onTap: () => _showMobileCart(context))
+                ]),
         ),
       ]),
     );
   }
 
   Widget _salesGrid() => products.isEmpty
-      ? const _EmptyCard(icon: Icons.point_of_sale_rounded, title: 'No sellable products', subtitle: 'Add products with available stock to start a sale.')
+      ? const _EmptyCard(
+          icon: Icons.point_of_sale_rounded,
+          title: 'No sellable products',
+          subtitle: 'Add products with available stock to start a sale.')
       : LayoutBuilder(builder: (_, c) {
-          final columns = c.maxWidth >= 1200 ? 4 : c.maxWidth >= 760 ? 3 : 2;
+          final columns = c.maxWidth >= 1200
+              ? 4
+              : c.maxWidth >= 760
+                  ? 3
+                  : 2;
           return GridView.builder(
             itemCount: products.length,
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: columns, crossAxisSpacing: 12, mainAxisSpacing: 12, childAspectRatio: .78),
-            itemBuilder: (_, i) => _SellProductCard(product: products[i], onAdd: () => add(products[i])),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: columns,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+                childAspectRatio: .78),
+            itemBuilder: (_, i) => _SellProductCard(
+                product: products[i], onAdd: () => add(products[i])),
           );
         });
 
   Future<void> _barcodeSearch(BuildContext context) async {
     final c = TextEditingController();
-    final value = await showDialog<String>(context: context, builder: (_) => AlertDialog(title: const Text('Find product', style: TextStyle(fontWeight: FontWeight.w900)), content: TextField(controller: c, autofocus: true, decoration: const InputDecoration(labelText: 'Barcode or SKU')), actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')), FilledButton(onPressed: () => Navigator.pop(context, c.text.trim()), child: const Text('Find'))]));
+    final value = await showDialog<String>(
+        context: context,
+        builder: (_) => AlertDialog(
+                title: const Text('Find product',
+                    style: TextStyle(fontWeight: FontWeight.w900)),
+                content: TextField(
+                    controller: c,
+                    autofocus: true,
+                    decoration:
+                        const InputDecoration(labelText: 'Barcode or SKU')),
+                actions: [
+                  TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Cancel')),
+                  FilledButton(
+                      onPressed: () => Navigator.pop(context, c.text.trim()),
+                      child: const Text('Find'))
+                ]));
     c.dispose();
-    if (value != null && value.isNotEmpty) { query = value; load(); }
+    if (value != null && value.isNotEmpty) {
+      query = value;
+      load();
+    }
   }
 
   void _showMobileCart(BuildContext context) => showModalBottomSheet<void>(
         context: context,
         showDragHandle: true,
         isScrollControlled: true,
-        builder: (_) => SafeArea(child: SizedBox(height: 480, child: Padding(padding: const EdgeInsets.all(16), child: _CartPanel(cart: cart, total: total, onRemove: (i) => setState(() => cart.removeAt(i)), onCheckout: () { Navigator.pop(context); checkout(); })))),
+        builder: (_) => SafeArea(
+            child: SizedBox(
+                height: 480,
+                child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: _CartPanel(
+                        cart: cart,
+                        total: total,
+                        onRemove: (i) => setState(() => cart.removeAt(i)),
+                        onCheckout: () {
+                          Navigator.pop(context);
+                          checkout();
+                        })))),
       );
 }
 
@@ -996,23 +1496,45 @@ class _CartButton extends StatelessWidget {
   final double total;
   final bool enabled;
   final VoidCallback onTap;
-  const _CartButton({required this.total, required this.enabled, required this.onTap});
+  const _CartButton(
+      {required this.total, required this.enabled, required this.onTap});
   @override
   Widget build(BuildContext context) => SizedBox(
-        width: MediaQuery.sizeOf(context).width > 430 ? 260 : MediaQuery.sizeOf(context).width - 44,
+        width: MediaQuery.sizeOf(context).width > 430
+            ? 260
+            : MediaQuery.sizeOf(context).width - 44,
         height: 52,
         child: DecoratedBox(
           decoration: BoxDecoration(
-            gradient: LinearGradient(colors: enabled ? const [_primary, _purple] : const [Color(0xFFD9DDE7), Color(0xFFC7CCD8)]),
+            gradient: LinearGradient(
+                colors: enabled
+                    ? const [_primary, _purple]
+                    : const [Color(0xFFD9DDE7), Color(0xFFC7CCD8)]),
             borderRadius: BorderRadius.circular(18),
-            boxShadow: enabled ? [BoxShadow(color: _primary.withAlpha(30), blurRadius: 16, offset: const Offset(0, 7))] : const [],
+            boxShadow: enabled
+                ? [
+                    BoxShadow(
+                        color: _primary.withAlpha(30),
+                        blurRadius: 16,
+                        offset: const Offset(0, 7))
+                  ]
+                : const [],
           ),
           child: Material(
             color: Colors.transparent,
             child: InkWell(
               borderRadius: BorderRadius.circular(18),
               onTap: enabled ? onTap : null,
-              child: Center(child: Row(mainAxisSize: MainAxisSize.min, children: [const Icon(Icons.shopping_bag_rounded, size: 18, color: Colors.white), const SizedBox(width: 8), Text(enabled ? 'Cart · ${money(total)}' : 'Cart · ₹0', style: TextStyle(color: enabled ? Colors.white : _muted, fontWeight: FontWeight.w900))])),
+              child: Center(
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                const Icon(Icons.shopping_bag_rounded,
+                    size: 18, color: Colors.white),
+                const SizedBox(width: 8),
+                Text(enabled ? 'Cart · ${money(total)}' : 'Cart · ₹0',
+                    style: TextStyle(
+                        color: enabled ? Colors.white : _muted,
+                        fontWeight: FontWeight.w900))
+              ])),
             ),
           ),
         ),
@@ -1030,13 +1552,40 @@ class _SellProductCard extends StatelessWidget {
           onTap: product.quantity <= 0 ? null : onAdd,
           child: Padding(
             padding: const EdgeInsets.all(10),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Expanded(child: Container(width: double.infinity, decoration: BoxDecoration(color: const Color(0xFFF3F5FA), borderRadius: BorderRadius.circular(17)), child: ProductImage(product: product, size: 170, radius: 17))),
+            child:
+                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Expanded(
+                  child: Container(
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                          color: const Color(0xFFF3F5FA),
+                          borderRadius: BorderRadius.circular(17)),
+                      child: ProductImage(
+                          product: product, size: 170, radius: 17))),
               const SizedBox(height: 9),
-              Text(product.brand, style: const TextStyle(color: _muted, fontSize: 11)),
-              Text(product.name, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900)),
+              Text(product.brand,
+                  style: const TextStyle(color: _muted, fontSize: 11)),
+              Text(product.name,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                      fontSize: 14, fontWeight: FontWeight.w900)),
               const SizedBox(height: 6),
-              Row(children: [Expanded(child: Text(money(product.sellingPrice), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900))), if (product.quantity > 0) Container(width: 34, height: 34, decoration: const BoxDecoration(color: _primary, shape: BoxShape.circle), child: const Icon(Icons.add_rounded, color: Colors.white)) else const StatusBadge('OUT OF STOCK')]),
+              Row(children: [
+                Expanded(
+                    child: Text(money(product.sellingPrice),
+                        style: const TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.w900))),
+                if (product.quantity > 0)
+                  Container(
+                      width: 34,
+                      height: 34,
+                      decoration: const BoxDecoration(
+                          color: _primary, shape: BoxShape.circle),
+                      child: const Icon(Icons.add_rounded, color: Colors.white))
+                else
+                  const StatusBadge('OUT OF STOCK')
+              ]),
             ]),
           ),
         ),
@@ -1048,19 +1597,68 @@ class _CartPanel extends StatelessWidget {
   final double total;
   final ValueChanged<int> onRemove;
   final VoidCallback onCheckout;
-  const _CartPanel({required this.cart, required this.total, required this.onRemove, required this.onCheckout});
+  const _CartPanel(
+      {required this.cart,
+      required this.total,
+      required this.onRemove,
+      required this.onCheckout});
   @override
   Widget build(BuildContext context) => Card(
         child: Padding(
           padding: const EdgeInsets.all(16),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Row(children: [const Expanded(child: Text('Current order', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900))), if (cart.isNotEmpty) Text('${cart.length} items', style: const TextStyle(color: _muted, fontSize: 11))]),
+          child:
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(children: [
+              const Expanded(
+                  child: Text('Current order',
+                      style: TextStyle(
+                          fontSize: 18, fontWeight: FontWeight.w900))),
+              if (cart.isNotEmpty)
+                Text('${cart.length} items',
+                    style: const TextStyle(color: _muted, fontSize: 11))
+            ]),
             const SizedBox(height: 12),
-            Expanded(child: cart.isEmpty ? const _EmptyCard(icon: Icons.shopping_bag_outlined, title: 'Your cart is empty', subtitle: 'Tap + on a product to add it.') : ListView.separated(itemCount: cart.length, separatorBuilder: (_, __) => const Divider(height: 1), itemBuilder: (_, i) { final x = cart[i]; return ListTile(contentPadding: EdgeInsets.zero, title: Text(x['name'].toString(), maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12)), subtitle: Text('${x['quantity']} × ${money(x['price'] as num)}', style: const TextStyle(fontSize: 11)), trailing: IconButton(onPressed: () => onRemove(i), icon: const Icon(Icons.close, size: 18))); })),
+            Expanded(
+                child: cart.isEmpty
+                    ? const _EmptyCard(
+                        icon: Icons.shopping_bag_outlined,
+                        title: 'Your cart is empty',
+                        subtitle: 'Tap + on a product to add it.')
+                    : ListView.separated(
+                        itemCount: cart.length,
+                        separatorBuilder: (_, __) => const Divider(height: 1),
+                        itemBuilder: (_, i) {
+                          final x = cart[i];
+                          return ListTile(
+                              contentPadding: EdgeInsets.zero,
+                              title: Text(x['name'].toString(),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 12)),
+                              subtitle: Text(
+                                  '${x['quantity']} × ${money(x['price'] as num)}',
+                                  style: const TextStyle(fontSize: 11)),
+                              trailing: IconButton(
+                                  onPressed: () => onRemove(i),
+                                  icon: const Icon(Icons.close, size: 18)));
+                        })),
             const Divider(),
-            Row(children: [const Expanded(child: Text('Total', style: TextStyle(color: _muted))), Text(money(total), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 21))]),
+            Row(children: [
+              const Expanded(
+                  child: Text('Total', style: TextStyle(color: _muted))),
+              Text(money(total),
+                  style: const TextStyle(
+                      fontWeight: FontWeight.w900, fontSize: 21))
+            ]),
             const SizedBox(height: 10),
-            SizedBox(width: double.infinity, height: 48, child: FilledButton(onPressed: cart.isEmpty ? null : onCheckout, child: const Text('Complete sale'))),
+            SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: FilledButton(
+                    onPressed: cart.isEmpty ? null : onCheckout,
+                    child: const Text('Complete sale'))),
           ]),
         ),
       );
@@ -1069,27 +1667,68 @@ class _CartPanel extends StatelessWidget {
 class PurchasesPage extends StatelessWidget {
   const PurchasesPage({super.key});
   @override
-  Widget build(BuildContext context) => Frame(child: ListView(children: const [
-        PageHeader(title: 'Purchases', subtitle: 'Receive stock and manage supplier invoices'),
+  Widget build(BuildContext context) => Frame(
+          child: ListView(children: const [
+        PageHeader(
+            title: 'Purchases',
+            subtitle: 'Receive stock and manage supplier invoices'),
         SizedBox(height: 18),
-        _FeatureTile(icon: Icons.add_shopping_cart_rounded, title: 'New purchase', subtitle: 'Create a purchase and receive stock.', accent: _primary),
-        _FeatureTile(icon: Icons.business_rounded, title: 'Suppliers', subtitle: 'Manage suppliers and outstanding payments.', accent: _purple),
-        _FeatureTile(icon: Icons.receipt_long_rounded, title: 'Purchase history', subtitle: 'Review previous purchases and costs.', accent: _orange),
+        _FeatureTile(
+            icon: Icons.add_shopping_cart_rounded,
+            title: 'New purchase',
+            subtitle: 'Create a purchase and receive stock.',
+            accent: _primary),
+        _FeatureTile(
+            icon: Icons.business_rounded,
+            title: 'Suppliers',
+            subtitle: 'Manage suppliers and outstanding payments.',
+            accent: _purple),
+        _FeatureTile(
+            icon: Icons.receipt_long_rounded,
+            title: 'Purchase history',
+            subtitle: 'Review previous purchases and costs.',
+            accent: _orange),
       ]));
 }
 
 class MorePage extends StatelessWidget {
   const MorePage({super.key});
   @override
-  Widget build(BuildContext context) => Frame(child: ListView(children: const [
-        PageHeader(title: 'More', subtitle: 'Business tools, reports and settings'),
+  Widget build(BuildContext context) => Frame(
+          child: ListView(children: const [
+        PageHeader(
+            title: 'More', subtitle: 'Business tools, reports and settings'),
         SizedBox(height: 18),
-        _FeatureTile(icon: Icons.people_alt_outlined, title: 'Customers', subtitle: 'Customer profiles, invoices and balances.', accent: _primary),
-        _FeatureTile(icon: Icons.local_shipping_outlined, title: 'Suppliers', subtitle: 'Supplier history and payments.', accent: _purple),
-        _FeatureTile(icon: Icons.receipt_long_outlined, title: 'Expenses', subtitle: 'Track operating expenses.', accent: _orange),
-        _FeatureTile(icon: Icons.bar_chart_rounded, title: 'Reports & analytics', subtitle: 'Sales, profit and inventory insights.', accent: _teal),
-        _FeatureTile(icon: Icons.backup_rounded, title: 'Backup & Restore', subtitle: 'Protect your local shop database.', accent: Color(0xFF3D7DD8)),
-        _FeatureTile(icon: Icons.settings_outlined, title: 'Settings', subtitle: 'Shop profile, GST, inventory and users.', accent: _muted),
+        _FeatureTile(
+            icon: Icons.people_alt_outlined,
+            title: 'Customers',
+            subtitle: 'Customer profiles, invoices and balances.',
+            accent: _primary),
+        _FeatureTile(
+            icon: Icons.local_shipping_outlined,
+            title: 'Suppliers',
+            subtitle: 'Supplier history and payments.',
+            accent: _purple),
+        _FeatureTile(
+            icon: Icons.receipt_long_outlined,
+            title: 'Expenses',
+            subtitle: 'Track operating expenses.',
+            accent: _orange),
+        _FeatureTile(
+            icon: Icons.bar_chart_rounded,
+            title: 'Reports & analytics',
+            subtitle: 'Sales, profit and inventory insights.',
+            accent: _teal),
+        _FeatureTile(
+            icon: Icons.backup_rounded,
+            title: 'Backup & Restore',
+            subtitle: 'Protect your local shop database.',
+            accent: Color(0xFF3D7DD8)),
+        _FeatureTile(
+            icon: Icons.settings_outlined,
+            title: 'Settings',
+            subtitle: 'Shop profile, GST, inventory and users.',
+            accent: _muted),
       ]));
 }
 
@@ -1098,35 +1737,109 @@ class _FeatureTile extends StatelessWidget {
   final String title;
   final String subtitle;
   final Color accent;
-  const _FeatureTile({required this.icon, required this.title, required this.subtitle, required this.accent});
+  const _FeatureTile(
+      {required this.icon,
+      required this.title,
+      required this.subtitle,
+      required this.accent});
   @override
   Widget build(BuildContext context) => Card(
         margin: const EdgeInsets.only(bottom: 9),
         child: ListTile(
-          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-          leading: Container(width: 44, height: 44, decoration: BoxDecoration(color: accent.withAlpha(16), borderRadius: BorderRadius.circular(13)), child: Icon(icon, color: accent)),
-          title: Text(title, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
-          subtitle: Text(subtitle, style: const TextStyle(fontSize: 11, color: _muted)),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+          leading: Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                  color: accent.withAlpha(16),
+                  borderRadius: BorderRadius.circular(13)),
+              child: Icon(icon, color: accent)),
+          title: Text(title,
+              style:
+                  const TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
+          subtitle: Text(subtitle,
+              style: const TextStyle(fontSize: 11, color: _muted)),
           trailing: const Icon(Icons.chevron_right_rounded, color: _muted),
         ),
       );
 }
 
-Future<void> showProductDetails(BuildContext context, Product p, Future<void> Function() refresh) async {
+Future<void> showProductDetails(
+  BuildContext context,
+  Product p,
+  Future<void> Function() refresh,
+) async {
   await showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
     showDragHandle: true,
     builder: (_) => SafeArea(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(18, 6, 18, 20),
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Row(children: [ProductImage(product: p, size: 72, radius: 18), const SizedBox(width: 13), Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(p.name, style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w900)), Text('${p.brand} • ${p.sku}', style: const TextStyle(color: _muted, fontSize: 12))])), StatusBadge(p.status)]),
-          const SizedBox(height: 18),
-          Row(children: [Expanded(child: _DetailStat('Selling', money(p.sellingPrice))), Expanded(child: _DetailStat('Purchase', money(p.purchasePrice))), Expanded(child: _DetailStat('Stock', '${p.quantity}'))]),
-          const SizedBox(height: 18),
-          Row(children: [Expanded(child: OutlinedButton.icon(onPressed: () async { Navigator.pop(context); await AppDatabase.instance.adjustStock(p.id, 1, 'ADJUSTMENT', 'Manual stock addition'); await refresh(); }, icon: const Icon(Icons.add), label: const Text('Add stock'))), const SizedBox(width: 10), Expanded(child: FilledButton.icon(onPressed: p.quantity == 0 ? null : () async { Navigator.pop(context); await AppDatabase.instance.adjustStock(p.id, -1, 'ADJUSTMENT', 'Manual stock removal'); await refresh(); }, icon: const Icon(Icons.remove), label: const Text('Remove stock')))]),
-        ]),
+        padding: const EdgeInsets.fromLTRB(22, 0, 22, 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              children: [
+                ProductImage(product: p, size: 68, radius: 18),
+                const SizedBox(width: 13),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(p.name,
+                          style: const TextStyle(
+                              fontSize: 19, fontWeight: FontWeight.w900)),
+                      Text('${p.brand} • ${p.sku}',
+                          style: const TextStyle(color: _muted, fontSize: 12)),
+                    ],
+                  ),
+                ),
+                StatusBadge(p.status),
+              ],
+            ),
+            const SizedBox(height: 18),
+            Row(
+              children: [
+                Expanded(child: _DetailStat('Selling', money(p.sellingPrice))),
+                Expanded(
+                    child: _DetailStat('Purchase', money(p.purchasePrice))),
+                Expanded(child: _DetailStat('Stock', '${p.quantity}')),
+              ],
+            ),
+            const SizedBox(height: 18),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () async {
+                      Navigator.pop(context);
+                      await AppDatabase.instance.adjustStock(
+                          p.id, 1, 'ADJUSTMENT', 'Manual stock addition');
+                      await refresh();
+                    },
+                    icon: const Icon(Icons.add),
+                    label: const Text('Add stock'),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: FilledButton.icon(
+                    onPressed: () async {
+                      Navigator.pop(context);
+                      await AppDatabase.instance.adjustStock(
+                          p.id, -1, 'ADJUSTMENT', 'Manual stock removal');
+                      await refresh();
+                    },
+                    icon: const Icon(Icons.remove),
+                    label: const Text('Remove stock'),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     ),
   );
@@ -1137,7 +1850,13 @@ class _DetailStat extends StatelessWidget {
   final String value;
   const _DetailStat(this.title, this.value);
   @override
-  Widget build(BuildContext context) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(title, style: const TextStyle(color: _muted, fontSize: 11)), const SizedBox(height: 4), Text(value, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15))]);
+  Widget build(BuildContext context) =>
+      Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(title, style: const TextStyle(color: _muted, fontSize: 11)),
+        const SizedBox(height: 4),
+        Text(value,
+            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15))
+      ]);
 }
 
 const _categories = <(String, IconData, Color)>[
