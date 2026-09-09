@@ -399,7 +399,7 @@ class _HomePageState extends State<HomePage> {
             const SizedBox(height: 22),
             _HeroBanner(products: products.length),
             const SizedBox(height: 24),
-            SectionTitle('Business snapshot'),
+            const SectionTitle('Business snapshot'),
             const SizedBox(height: 11),
             LayoutBuilder(
               builder: (_, c) {
@@ -437,7 +437,7 @@ class _HomePageState extends State<HomePage> {
             else
               for (final p in low) _LowStockTile(product: p),
             const SizedBox(height: 26),
-            SectionTitle('Recently stocked'),
+            const SectionTitle('Recently stocked'),
             const SizedBox(height: 10),
             SizedBox(
               height: 238,
@@ -624,9 +624,9 @@ class _InventoryPageState extends State<InventoryPage> {
           Row(children: [
             _FilterPill(label: 'All products', selected: widget.category == null),
             const SizedBox(width: 8),
-            _FilterPill(label: 'Low stock'),
+            const _FilterPill(label: 'Low stock'),
             const SizedBox(width: 8),
-            _FilterPill(label: 'Out of stock'),
+            const _FilterPill(label: 'Out of stock'),
             const Spacer(),
             Text('${items.length} results', style: const TextStyle(color: _muted, fontSize: 12)),
           ]),
