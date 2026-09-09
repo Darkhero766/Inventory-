@@ -31,7 +31,7 @@ jobs:
           from pathlib import Path
           p = Path('lib/main.dart')
           s = p.read_text()
-          s = s.replace('    ]))),\n    actions:', '    ]))))),\n    actions:')
+          s = s.replace('    ]))),\n    actions:', '    ])))),\n    actions:')
           start = s.find('Future<void> showProductDetails(')
           end = s.find('class _DetailStat', start)
           if start >= 0 and end > start:
