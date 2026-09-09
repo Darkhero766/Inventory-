@@ -4,40 +4,282 @@ import 'data/database.dart';
 import 'models/models.dart';
 import 'theme/app_theme.dart';
 
-String money(num n) => NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 0).format(n);
-void main() async { WidgetsFlutterBinding.ensureInitialized(); await AppDatabase.instance.db; runApp(const InventoryApp()); }
+String money(num value) => NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 0).format(value);
 
-class InventoryApp extends StatelessWidget { const InventoryApp({super.key}); @override Widget build(BuildContext c) => MaterialApp(debugShowCheckedModeBanner:false,title:'Inventory',theme:AppTheme.light(),home:const Shell()); }
-class Shell extends StatefulWidget { const Shell({super.key}); @override State<Shell> createState()=>_ShellState(); }
-class _ShellState extends State<Shell> {
- int tab=0; final pages=const [HomePage(),InventoryPage(),PurchasesPage(),SalesPage(),MorePage()];
- @override Widget build(BuildContext c){ final wide=MediaQuery.sizeOf(c).width>=900; final names=['Home','Inventory','Purchases','Sales','More']; final icons=[Icons.home_outlined,Icons.grid_view_outlined,Icons.local_shipping_outlined,Icons.point_of_sale_outlined,Icons.more_horiz]; return Scaffold(body:wide?Row(children:[NavigationRail(selectedIndex:tab,onDestinationSelected:(v)=>setState(()=>tab=v),labelType:NavigationRailLabelType.all,leading:const Padding(padding:EdgeInsets.all(20),child:Text('INVENTORY',style:TextStyle(fontWeight:FontWeight.w900,color:AppTheme.blue))),destinations:[for(int i=0;i<5;i++) NavigationRailDestination(icon:Icon(icons[i]),label:Text(names[i]))]),const VerticalDivider(width:1),Expanded(child:pages[tab])]):pages[tab],bottomNavigationBar:wide?null:NavigationBar(selectedIndex:tab,onDestinationSelected:(v)=>setState(()=>tab=v),destinations:[for(int i=0;i<5;i++) NavigationDestination(icon:Icon(icons[i]),label:names[i])])); }
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await AppDatabase.instance.db;
+  runApp(const InventoryApp());
 }
-class PageWrap extends StatelessWidget { final Widget child; const PageWrap({super.key,required this.child}); @override Widget build(BuildContext c)=>SafeArea(child:Center(child:ConstrainedBox(constraints:const BoxConstraints(maxWidth:1450),child:Padding(padding:const EdgeInsets.all(22),child:child)))); }
-class SearchBox extends StatelessWidget { final ValueChanged<String>? onChanged; const SearchBox({super.key,this.onChanged}); @override Widget build(BuildContext c)=>TextField(onChanged:onChanged,decoration:const InputDecoration(prefixIcon:Icon(Icons.search),hintText:'Search products, brands, models, SKU or barcode')); }
-class Badge extends StatelessWidget { final String text; const Badge(this.text,{super.key}); @override Widget build(BuildContext c){final col=text=='IN STOCK'?AppTheme.green:text=='LOW STOCK'?AppTheme.amber:AppTheme.red;return Container(padding:const EdgeInsets.symmetric(horizontal:8,vertical:5),decoration:BoxDecoration(color:col.withValues(alpha:.1),borderRadius:BorderRadius.circular(20)),child:Text(text,style:TextStyle(color:col,fontSize:10,fontWeight:FontWeight.w800)));} }
-class TitleText extends StatelessWidget { final String text; const TitleText(this.text,{super.key}); @override Widget build(BuildContext c)=>Text(text,style:Theme.of(c).textTheme.titleLarge?.copyWith(fontWeight:FontWeight.w800)); }
-class Metric extends StatelessWidget { final String title,value; final IconData icon; const Metric(this.title,this.value,this.icon,{super.key}); @override Widget build(BuildContext c)=>SizedBox(width:220,child:Card(child:Padding(padding:const EdgeInsets.all(16),child:Row(children:[Icon(icon,color:AppTheme.blue,size:30),const SizedBox(width:12),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(title,style:const TextStyle(fontSize:12,color:AppTheme.muted)),const SizedBox(height:5),Text(value,style:const TextStyle(fontSize:18,fontWeight:FontWeight.w900))]))])))); }
 
-class HomePage extends StatefulWidget { const HomePage({super.key}); @override State<HomePage> createState()=>_HomePageState(); }
-class _HomePageState extends State<HomePage>{List<Product> products=[];double sales=0,purchases=0,value=0;int low=0;@override void initState(){super.initState();load();}Future<void>load()async{final db=await AppDatabase.instance.db;final p=await AppDatabase.instance.products();final s=await db.rawQuery('SELECT COALESCE(SUM(total),0) v FROM sales');final pu=await db.rawQuery('SELECT COALESCE(SUM(total),0) v FROM purchases');if(mounted)setState((){products=p;sales=(s.first['v'] as num?)?.toDouble()??0;purchases=(pu.first['v'] as num?)?.toDouble()??0;value=p.fold(0,(a,x)=>a+x.quantity*x.purchasePrice);low=p.where((x)=>x.quantity<=x.minimumStock).length;});}
-@override Widget build(BuildContext c){final cats=['Mobile Phones','Laptops','Televisions','Refrigerators','Air Conditioners','Washing Machines','Audio','Cameras','Printers','Networking','Storage','Accessories'];final lows=products.where((p)=>p.quantity<=p.minimumStock).take(5).toList();return PageWrap(child:RefreshIndicator(onRefresh:load,child:ListView(children:[Row(children:[Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text('Good morning',style:Theme.of(c).textTheme.headlineMedium?.copyWith(fontWeight:FontWeight.w900)),const Text('ElectroMart Electronics',style:TextStyle(color:AppTheme.muted))])),const Icon(Icons.notifications_none)]),const SizedBox(height:18),SearchBox(onChanged:(q){if(q.isNotEmpty)Navigator.push(c,MaterialPageRoute(builder:(_)=>InventoryPage(query:q)));}),const SizedBox(height:26),const TitleText('Categories'),const SizedBox(height:12),SizedBox(height:112,child:ListView(scrollDirection:Axis.horizontal,children:[for(final cat in cats)Padding(padding:const EdgeInsets.only(right:10),child:InkWell(onTap:()=>Navigator.push(c,MaterialPageRoute(builder:(_)=>InventoryPage(category:cat))),child:Container(width:135,padding:const EdgeInsets.all(14),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(18),border:Border.all(color:const Color(0xffe9ebef))),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Icon(catIcon(cat),color:AppTheme.blue,size:30),const Spacer(),Text(cat,maxLines:2,style:const TextStyle(fontWeight:FontWeight.w700))]))))])),const SizedBox(height:26),const TitleText('Business snapshot'),const SizedBox(height:12),Wrap(spacing:12,runSpacing:12,children:[Metric('Sales',money(sales),Icons.point_of_sale_outlined),Metric('Purchases',money(purchases),Icons.local_shipping_outlined),Metric('Inventory value',money(value),Icons.inventory_2_outlined),Metric('Low stock','$low items',Icons.warning_amber_outlined)]),const SizedBox(height:28),Row(mainAxisAlignment:MainAxisAlignment.spaceBetween,children:[const TitleText('Low stock'),TextButton(onPressed:()=>Navigator.push(c,MaterialPageRoute(builder:(_)=>const InventoryPage(lowOnly:true))),child:const Text('View all'))]),...lows.map((p)=>Card(child:ListTile(leading:CircleAvatar(child:Icon(catIcon(p.category))),title:Text('${p.brand} · ${p.name}'),subtitle:Text('${p.quantity} units left · ${p.sku}'),trailing:Badge(p.status),onTap:()=>productSheet(c,p,load)))),const SizedBox(height:24),const TitleText('Top products'),const SizedBox(height:12),SizedBox(height:220,child:ListView.separated(scrollDirection:Axis.horizontal,itemCount:products.take(10).length,separatorBuilder:(_,__)=>const SizedBox(width:12),itemBuilder:(_,i)=>ProductCard(products[i],width:200,onTap:()=>productSheet(c,products[i],load))))])));}}
+class InventoryApp extends StatelessWidget {
+  const InventoryApp({super.key});
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: 'Inventory',
+      theme: AppTheme.light(),
+      home: const AppShell(),
+    );
+  }
+}
 
-class InventoryPage extends StatefulWidget{final String?query,category;final bool lowOnly;const InventoryPage({super.key,this.query,this.category,this.lowOnly=false});@override State<InventoryPage>createState()=>_InventoryPageState();}
-class _InventoryPageState extends State<InventoryPage>{List<Product>items=[];String q='';bool loading=true;@override void initState(){super.initState();q=widget.query??'';load();}Future<void>load()async{setState(()=>loading=true);final p=await AppDatabase.instance.products(query:q,category:widget.category);if(mounted)setState((){items=widget.lowOnly?p.where((x)=>x.quantity<=x.minimumStock).toList():p;loading=false;});}@override Widget build(BuildContext c)=>PageWrap(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Row(children:[Expanded(child:Text(widget.category??(widget.lowOnly?'Low Stock':'Inventory'),style:Theme.of(c).textTheme.headlineMedium?.copyWith(fontWeight:FontWeight.w900))),FilledButton.icon(onPressed:()=>productForm(c,onSaved:load),icon:const Icon(Icons.add),label:const Text('Add Product'))]),const SizedBox(height:6),Text('${items.length} products',style:const TextStyle(color:AppTheme.muted)),const SizedBox(height:14),SearchBox(onChanged:(v){q=v;load();}),const SizedBox(height:12),Expanded(child:loading?const Center(child:CircularProgressIndicator()):items.isEmpty?const EmptyState(title:'No products found',message:'Try another search or filter.'):LayoutBuilder(builder:(_,b){final n=b.maxWidth>=1200?4:b.maxWidth>=800?3:2;return GridView.builder(itemCount:items.length,gridDelegate:SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount:n,crossAxisSpacing:14,mainAxisSpacing:14,childAspectRatio:.73),itemBuilder:(_,i)=>ProductCard(items[i],onTap:()=>productSheet(c,items[i],load)));}))]));}}
-class ProductCard extends StatelessWidget{final Product p;final double?width;final VoidCallback?onTap;const ProductCard(this.p,{super.key,this.width,this.onTap});@override Widget build(BuildContext c)=>SizedBox(width:width,child:Card(child:InkWell(onTap:onTap,borderRadius:BorderRadius.circular(18),child:Padding(padding:const EdgeInsets.all(10),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Expanded(child:Container(width:double.infinity,decoration:BoxDecoration(color:AppTheme.bg,borderRadius:BorderRadius.circular(14)),child:Icon(catIcon(p.category),size:64,color:AppTheme.blue))),const SizedBox(height:8),Text(p.brand,style:const TextStyle(fontSize:12,color:AppTheme.muted)),Text(p.name,maxLines:2,overflow:TextOverflow.ellipsis,style:const TextStyle(fontWeight:FontWeight.w700)),const SizedBox(height:5),Text(money(p.sellingPrice),style:const TextStyle(fontSize:17,fontWeight:FontWeight.w900)),const SizedBox(height:5),Row(children:[Badge(p.status),const Spacer(),Text('${p.quantity} left',style:const TextStyle(fontSize:11,color:AppTheme.muted))])]))));}
+class AppShell extends StatefulWidget {
+  const AppShell({super.key});
+  @override
+  State<AppShell> createState() => _AppShellState();
+}
 
-Future<void>productSheet(BuildContext c,Product p,VoidCallback refresh)async{await showModalBottomSheet(context:c,isScrollControlled:true,showDragHandle:true,builder:(_)=>Padding(padding:const EdgeInsets.all(22),child:Wrap(children:[Row(children:[Expanded(child:Text(p.name,style:const TextStyle(fontSize:24,fontWeight:FontWeight.w900))),Badge(p.status)]),Text('${p.brand} · ${p.category}',style:const TextStyle(color:AppTheme.muted)),const SizedBox(height:15),Container(height:170,width:double.infinity,decoration:BoxDecoration(color:AppTheme.bg,borderRadius:BorderRadius.circular(20)),child:Icon(catIcon(p.category),size:80,color:AppTheme.blue)),const SizedBox(height:15),Text(money(p.sellingPrice),style:const TextStyle(fontSize:28,fontWeight:FontWeight.w900)),Text('Cost ${money(p.purchasePrice)}  •  Profit ${money(p.profit)}  •  Margin ${p.margin.toStringAsFixed(1)}%'),const SizedBox(height:12),Wrap(spacing:8,runSpacing:8,children:[Chip(label:Text('Stock ${p.quantity}')),Chip(label:Text('Min ${p.minimumStock}')),Chip(label:Text('SKU ${p.sku}')),Chip(label:Text('Model ${p.model}'))]),const SizedBox(height:12),Row(children:[Expanded(child:OutlinedButton.icon(onPressed:()=>adjustStock(c,p,refresh),icon:const Icon(Icons.inventory_2_outlined),label:const Text('Adjust Stock'))),const SizedBox(width:8),Expanded(child:FilledButton.icon(onPressed:()=>Navigator.pop(c),icon:const Icon(Icons.point_of_sale),label:const Text('Sell'))]),TextButton.icon(onPressed:()=>productForm(c,product:p,onSaved:refresh),icon:const Icon(Icons.edit_outlined),label:const Text('Edit product')),ExpansionTile(title:const Text('Stock history'),children:[FutureBuilder<List<Map<String,Object?>>>(future:AppDatabase.instance.movements(p.id!),builder:(_,s)=>Column(children:[for(final m in (s.data??[]).take(20))ListTile(title:Text('${m['type']} · ${m['quantity']}'),subtitle:Text('${m['note']??''}'))]))])])));}
-Future<void>adjustStock(BuildContext c,Product p,VoidCallback refresh)async{final q=TextEditingController(),r=TextEditingController();final ok=await showDialog<bool>(context:c,builder:(_)=>AlertDialog(title:const Text('Adjust stock'),content:Column(mainAxisSize:MainAxisSize.min,children:[Text('Current stock: ${p.quantity}'),TextField(controller:q,keyboardType:TextInputType.number,decoration:const InputDecoration(labelText:'Quantity change',hintText:'+5 or -1')),TextField(controller:r,decoration:const InputDecoration(labelText:'Reason'))]),actions:[TextButton(onPressed:()=>Navigator.pop(c,false),child:const Text('Cancel')),FilledButton(onPressed:()=>Navigator.pop(c,true),child:const Text('Save'))]));if(ok==true){try{await AppDatabase.instance.adjustStock(p,int.tryParse(q.text)??0,r.text.isEmpty?'Stock adjustment':r.text);refresh();}catch(e){if(c.mounted)ScaffoldMessenger.of(c).showSnackBar(SnackBar(content:Text(e.toString())));}}}
-Future<void>productForm(BuildContext c,{Product?product,VoidCallback?onSaved})async{final fields=<String,TextEditingController>{for(final x in ['name','brand','category','model','sku','barcode','purchase','selling','mrp','quantity','minimum'])x:TextEditingController()};fields['name']!.text=product?.name??'';fields['brand']!.text=product?.brand??'';fields['category']!.text=product?.category??'';fields['model']!.text=product?.model??'';fields['sku']!.text=product?.sku??'';fields['barcode']!.text=product?.barcode??'';fields['purchase']!.text=product?.purchasePrice.toString()??'';fields['selling']!.text=product?.sellingPrice.toString()??'';fields['mrp']!.text=product?.mrp.toString()??'';fields['quantity']!.text=product?.quantity.toString()??'0';fields['minimum']!.text=product?.minimumStock.toString()??'2';final ok=await showDialog<bool>(context:c,builder:(_)=>AlertDialog(title:Text(product==null?'Add product':'Edit product'),content:SizedBox(width:520,child:SingleChildScrollView(child:Column(children:[for(final x in fields.keys)Padding(padding:const EdgeInsets.only(bottom:8),child:TextField(controller:fields[x],keyboardType:['purchase','selling','mrp','quantity','minimum'].contains(x)?TextInputType.number:null,decoration:InputDecoration(labelText:x[0].toUpperCase()+x.substring(1)))]))),),actions:[TextButton(onPressed:()=>Navigator.pop(c,false),child:const Text('Cancel')),FilledButton(onPressed:()=>Navigator.pop(c,true),child:const Text('Save'))]));if(ok!=true)return;final v=<String,Object?>{'name':fields['name']!.text.trim(),'brand':fields['brand']!.text.trim(),'category':fields['category']!.text.trim(),'model':fields['model']!.text.trim(),'sku':fields['sku']!.text.trim(),'barcode':fields['barcode']!.text.trim(),'purchase_price':double.tryParse(fields['purchase']!.text)??0,'selling_price':double.tryParse(fields['selling']!.text)??0,'mrp':double.tryParse(fields['mrp']!.text)??0,'quantity':int.tryParse(fields['quantity']!.text)??0,'minimum_stock':int.tryParse(fields['minimum']!.text)??2,'supplier':product?.supplier??'','warranty':product?.warranty??'1 Year','specs':product?.specs??''};try{if(product==null)await AppDatabase.instance.addProduct(v);else await AppDatabase.instance.updateProduct(product.id!,v);onSaved?.call();}catch(e){if(c.mounted)ScaffoldMessenger.of(c).showSnackBar(SnackBar(content:Text(e.toString())));}}
+class _AppShellState extends State<AppShell> {
+  int index = 0;
+  final pages = const [HomePage(), InventoryPage(), PurchasesPage(), SalesPage(), MorePage()];
+  final labels = const ['Home', 'Inventory', 'Purchases', 'Sales', 'More'];
+  final icons = const [Icons.home_outlined, Icons.inventory_2_outlined, Icons.local_shipping_outlined, Icons.point_of_sale_outlined, Icons.more_horiz];
 
-class PurchasesPage extends StatelessWidget{const PurchasesPage({super.key});@override Widget build(BuildContext c)=>const TablePage(title:'Purchases',table:'purchases');}
-class TablePage extends StatefulWidget{final String title,table;const TablePage({super.key,required this.title,required this.table});@override State<TablePage>createState()=>_TablePageState();}
-class _TablePageState extends State<TablePage>{List<Map<String,Object?>>rows=[];@override void initState(){super.initState();load();}Future<void>load()async{final d=await AppDatabase.instance.db;final r=await d.query(widget.table,orderBy:'id DESC',limit:100);if(mounted)setState(()=>rows=r);} @override Widget build(BuildContext c)=>PageWrap(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(widget.title,style:Theme.of(c).textTheme.headlineMedium?.copyWith(fontWeight:FontWeight.w900)),const SizedBox(height:14),Expanded(child:rows.isEmpty?const EmptyState(title:'No records yet',message:'Transactions will appear here.'):ListView.separated(itemCount:rows.length,separatorBuilder:(_,__)=>const SizedBox(height:8),itemBuilder:(_,i)=>Card(child:ListTile(title:Text('${rows[i]['supplier']??rows[i]['customer']??'Transaction'}'),subtitle:Text('${rows[i]['date']??''} · ${rows[i]['payment']??''}'),trailing:Text(money((rows[i]['total'] as num?)??0),style:const TextStyle(fontWeight:FontWeight.w800)))))]));}
-class SalesPage extends StatelessWidget{const SalesPage({super.key});@override Widget build(BuildContext c)=>const POSPage();}
-class POSPage extends StatefulWidget{const POSPage({super.key});@override State<POSPage>createState()=>_POSPageState();}
-class _POSPageState extends State<POSPage>{List<Product>items=[];final cart=<Map<String,Object?>>[];String q='';@override void initState(){super.initState();load();}Future<void>load()async{final p=await AppDatabase.instance.products(query:q);if(mounted)setState(()=>items=p);}double get total=>cart.fold(0,(a,x)=>a+(x['price'] as double)*(x['quantity'] as int));void add(Product p){final i=cart.indexWhere((x)=>x['product_id']==p.id);if(i>=0)cart[i]['quantity']=(cart[i]['quantity'] as int)+1;else cart.add({'product_id':p.id!,'name':p.name,'price':p.sellingPrice,'quantity':1});setState((){});}@override Widget build(BuildContext c)=>PageWrap(child:LayoutBuilder(builder:(_,b){final catalog=Expanded(child:Column(children:[SearchBox(onChanged:(v){q=v;load();}),const SizedBox(height:12),Expanded(child:GridView.builder(itemCount:items.length,gridDelegate:const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount:2,crossAxisSpacing:10,mainAxisSpacing:10,childAspectRatio:1.2),itemBuilder:(_,i)=>InkWell(onTap:()=>add(items[i]),child:ProductCard(items[i]))))]));final cartView=SizedBox(width:b.maxWidth>800?380:double.infinity,child:Card(child:Padding(padding:const EdgeInsets.all(16),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[const Text('Cart',style:TextStyle(fontSize:22,fontWeight:FontWeight.w900)),const SizedBox(height:10),Expanded(child:cart.isEmpty?const EmptyState(title:'Cart is empty',message:'Tap a product to add it.'):ListView(children:[for(final x in cart)ListTile(title:Text(x['name'] as String),subtitle:Text('${x['quantity']} × ${money(x['price'] as double)}'),trailing:Text(money((x['price'] as double)*(x['quantity'] as int))))])),const Divider(),Row(mainAxisAlignment:MainAxisAlignment.spaceBetween,children:[const Text('Total',style:TextStyle(fontWeight:FontWeight.w700)),Text(money(total),style:const TextStyle(fontSize:22,fontWeight:FontWeight.w900))]),const SizedBox(height:10),SizedBox(width:double.infinity,child:FilledButton(onPressed:cart.isEmpty?null:checkout,child:const Text('Complete Sale')))])));return b.maxWidth>800?Row(children:[catalog,const SizedBox(width:14),cartView]):Column(children:[catalog,const SizedBox(height:14),cartView]);}));}Future<void>checkout()async{try{await AppDatabase.instance.sellCart(cart);if(mounted){setState(()=>cart.clear());await load();ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('Sale completed and stock updated.')));}}catch(e){if(mounted)ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(e.toString())));}}}
-class MorePage extends StatelessWidget{const MorePage({super.key});@override Widget build(BuildContext c){final names=['Customers','Suppliers','Expenses','Reports','Monthly Books','Warranty','Dead Stock','Backup & Restore','Settings','Users','Notifications'];return PageWrap(child:ListView(children:[Text('More',style:Theme.of(c).textTheme.headlineMedium?.copyWith(fontWeight:FontWeight.w900)),const SizedBox(height:12),for(final x in names)Card(child:ListTile(leading:Icon(catIcon(x),color:AppTheme.blue),title:Text(x),trailing:const Icon(Icons.chevron_right),onTap:()=>Navigator.push(c,MaterialPageRoute(builder:(_)=>PlaceholderPage(title:x)))))]));}}
-class PlaceholderPage extends StatelessWidget{final String title;const PlaceholderPage({super.key,required this.title});@override Widget build(BuildContext c)=>Scaffold(appBar:AppBar(title:Text(title)),body:Center(child:Text('$title\n\nModule connected to the local application.',textAlign:TextAlign.center,style:const TextStyle(fontSize:18,fontWeight:FontWeight.w700))));}
-class EmptyState extends StatelessWidget{final String title,message;const EmptyState({super.key,required this.title,required this.message});@override Widget build(BuildContext c)=>Center(child:Padding(padding:const EdgeInsets.all(30),child:Column(mainAxisAlignment:MainAxisAlignment.center,children:[const Icon(Icons.inventory_2_outlined,size:50,color:AppTheme.muted),const SizedBox(height:12),Text(title,textAlign:TextAlign.center,style:const TextStyle(fontWeight:FontWeight.w800)),const SizedBox(height:5),Text(message,textAlign:TextAlign.center,style:const TextStyle(color:AppTheme.muted))])));}
-IconData catIcon(String s){final x=s.toLowerCase();if(x.contains('phone'))return Icons.smartphone;if(x.contains('laptop'))return Icons.laptop;if(x.contains('television')||x=='tvs')return Icons.tv;if(x.contains('refrigerator'))return Icons.kitchen;if(x.contains('air conditioner'))return Icons.ac_unit;if(x.contains('washing'))return Icons.local_laundry_service;if(x.contains('audio'))return Icons.headphones;if(x.contains('camera'))return Icons.camera_alt;if(x.contains('printer'))return Icons.print;if(x.contains('network'))return Icons.router;if(x.contains('storage'))return Icons.storage;if(x.contains('customer'))return Icons.people_alt_outlined;if(x.contains('supplier'))return Icons.local_shipping_outlined;if(x.contains('expense'))return Icons.payments_outlined;if(x.contains('report'))return Icons.insights_outlined;if(x.contains('backup'))return Icons.backup_outlined;if(x.contains('warranty'))return Icons.verified_outlined;if(x.contains('dead'))return Icons.hourglass_empty;if(x.contains('user'))return Icons.manage_accounts_outlined;if(x.contains('notification'))return Icons.notifications_outlined;return Icons.inventory_2_outlined;}
+  @override
+  Widget build(BuildContext context) {
+    final wide = MediaQuery.sizeOf(context).width >= 900;
+    return Scaffold(
+      body: wide
+          ? Row(children: [
+              NavigationRail(
+                selectedIndex: index,
+                onDestinationSelected: (value) => setState(() => index = value),
+                labelType: NavigationRailLabelType.all,
+                leading: const Padding(padding: EdgeInsets.all(20), child: Text('INVENTORY', style: TextStyle(fontWeight: FontWeight.w900, color: AppTheme.blue))),
+                destinations: [for (var i = 0; i < labels.length; i++) NavigationRailDestination(icon: Icon(icons[i]), label: Text(labels[i]))],
+              ),
+              const VerticalDivider(width: 1),
+              Expanded(child: pages[index]),
+            ])
+          : pages[index],
+      bottomNavigationBar: wide
+          ? null
+          : NavigationBar(
+              selectedIndex: index,
+              onDestinationSelected: (value) => setState(() => index = value),
+              destinations: [for (var i = 0; i < labels.length; i++) NavigationDestination(icon: Icon(icons[i]), label: labels[i])],
+            ),
+    );
+  }
+}
+
+class PageFrame extends StatelessWidget {
+  final Widget child;
+  const PageFrame({super.key, required this.child});
+  @override
+  Widget build(BuildContext context) => SafeArea(child: Center(child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 1450), child: Padding(padding: const EdgeInsets.all(22), child: child))));
+}
+
+class SearchField extends StatelessWidget {
+  final ValueChanged<String>? onChanged;
+  const SearchField({super.key, this.onChanged});
+  @override
+  Widget build(BuildContext context) => TextField(onChanged: onChanged, decoration: const InputDecoration(prefixIcon: Icon(Icons.search), hintText: 'Search products, brands, models, SKU or barcode'));
+}
+
+class StatusBadge extends StatelessWidget {
+  final String status;
+  const StatusBadge(this.status, {super.key});
+  @override
+  Widget build(BuildContext context) {
+    final color = status == 'IN STOCK' ? AppTheme.green : status == 'LOW STOCK' ? AppTheme.amber : AppTheme.red;
+    return Container(padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5), decoration: BoxDecoration(color: color.withValues(alpha: .1), borderRadius: BorderRadius.circular(20)), child: Text(status, style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.w800)));
+  }
+}
+
+class SectionTitle extends StatelessWidget {
+  final String text;
+  const SectionTitle(this.text, {super.key});
+  @override
+  Widget build(BuildContext context) => Text(text, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800));
+}
+
+class HomePage extends StatefulWidget {
+  const HomePage({super.key});
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  List<Product> products = [];
+  double sales = 0;
+  double purchases = 0;
+  double inventoryValue = 0;
+  int lowStock = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    load();
+  }
+
+  Future<void> load() async {
+    final database = await AppDatabase.instance.db;
+    final list = await AppDatabase.instance.products();
+    final saleRows = await database.rawQuery('SELECT COALESCE(SUM(total),0) AS value FROM sales');
+    final purchaseRows = await database.rawQuery('SELECT COALESCE(SUM(total),0) AS value FROM purchases');
+    if (!mounted) return;
+    setState(() {
+      products = list;
+      sales = (saleRows.first['value'] as num?)?.toDouble() ?? 0;
+      purchases = (purchaseRows.first['value'] as num?)?.toDouble() ?? 0;
+      inventoryValue = list.fold<double>(0, (sum, p) => sum + p.quantity * p.purchasePrice);
+      lowStock = list.where((p) => p.quantity <= p.minimumStock).length;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final categories = const ['Mobile Phones', 'Laptops', 'Televisions', 'Refrigerators', 'Air Conditioners', 'Washing Machines', 'Audio', 'Cameras', 'Printers', 'Networking', 'Storage', 'Accessories'];
+    final low = products.where((p) => p.quantity <= p.minimumStock).take(5).toList();
+    return PageFrame(child: RefreshIndicator(onRefresh: load, child: ListView(children: [
+      Row(children: [Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text('Good morning', style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w900)), const Text('ElectroMart Electronics', style: TextStyle(color: AppTheme.muted))])), const Icon(Icons.notifications_none)]),
+      const SizedBox(height: 18),
+      SearchField(onChanged: (q) { if (q.trim().isNotEmpty) Navigator.push(context, MaterialPageRoute(builder: (_) => InventoryPage(query: q.trim()))); }),
+      const SizedBox(height: 26),
+      const SectionTitle('Categories'), const SizedBox(height: 12),
+      SizedBox(height: 112, child: ListView(scrollDirection: Axis.horizontal, children: [for (final category in categories) Padding(padding: const EdgeInsets.only(right: 10), child: InkWell(onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => InventoryPage(category: category))), borderRadius: BorderRadius.circular(18), child: Container(width: 140, padding: const EdgeInsets.all(14), decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18), border: Border.all(color: const Color(0xffe9ebef))), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Icon(categoryIcon(category), color: AppTheme.blue, size: 30), const Spacer(), Text(category, maxLines: 2, style: const TextStyle(fontWeight: FontWeight.w700))]))))]),
+      const SizedBox(height: 26), const SectionTitle('Business snapshot'), const SizedBox(height: 12),
+      Wrap(spacing: 12, runSpacing: 12, children: [MetricCard('Sales', money(sales), Icons.point_of_sale_outlined), MetricCard('Purchases', money(purchases), Icons.local_shipping_outlined), MetricCard('Inventory value', money(inventoryValue), Icons.inventory_2_outlined), MetricCard('Low stock', '$lowStock items', Icons.warning_amber_outlined)]),
+      const SizedBox(height: 28),
+      Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [const SectionTitle('Low stock'), TextButton(onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const InventoryPage(lowOnly: true))), child: const Text('View all'))]),
+      ...low.map((p) => Card(child: ListTile(leading: CircleAvatar(child: Icon(categoryIcon(p.category))), title: Text('${p.brand} · ${p.name}'), subtitle: Text('${p.quantity} units left · ${p.sku}'), trailing: StatusBadge(p.status), onTap: () => productDetails(context, p, load)))),
+      const SizedBox(height: 24), const SectionTitle('Top products'), const SizedBox(height: 12),
+      SizedBox(height: 220, child: ListView.separated(scrollDirection: Axis.horizontal, itemCount: products.length > 10 ? 10 : products.length, separatorBuilder: (_, __) => const SizedBox(width: 12), itemBuilder: (_, i) => ProductCard(products[i], width: 205, onTap: () => productDetails(context, products[i], load)))),
+    ])));
+  }
+}
+
+class MetricCard extends StatelessWidget {
+  final String title;
+  final String value;
+  final IconData icon;
+  const MetricCard(this.title, this.value, this.icon, {super.key});
+  @override
+  Widget build(BuildContext context) => SizedBox(width: 220, child: Card(child: Padding(padding: const EdgeInsets.all(16), child: Row(children: [Icon(icon, color: AppTheme.blue, size: 30), const SizedBox(width: 12), Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(title, style: const TextStyle(fontSize: 12, color: AppTheme.muted)), const SizedBox(height: 5), Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900))]))])));
+}
+
+class InventoryPage extends StatefulWidget {
+  final String? query;
+  final String? category;
+  final bool lowOnly;
+  const InventoryPage({super.key, this.query, this.category, this.lowOnly = false});
+  @override
+  State<InventoryPage> createState() => _InventoryPageState();
+}
+
+class _InventoryPageState extends State<InventoryPage> {
+  List<Product> items = [];
+  String query = '';
+  bool loading = true;
+  @override
+  void initState() { super.initState(); query = widget.query ?? ''; load(); }
+  Future<void> load() async {
+    setState(() => loading = true);
+    final result = await AppDatabase.instance.products(query: query, category: widget.category);
+    if (!mounted) return;
+    setState(() { items = widget.lowOnly ? result.where((p) => p.quantity <= p.minimumStock).toList() : result; loading = false; });
+  }
+  @override
+  Widget build(BuildContext context) => PageFrame(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+    Row(children: [Expanded(child: Text(widget.category ?? (widget.lowOnly ? 'Low Stock' : 'Inventory'), style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w900))), FilledButton.icon(onPressed: () => productForm(context, onSaved: load), icon: const Icon(Icons.add), label: const Text('Add Product'))]),
+    const SizedBox(height: 6), Text('${items.length} products', style: const TextStyle(color: AppTheme.muted)), const SizedBox(height: 14),
+    SearchField(onChanged: (value) { query = value; load(); }), const SizedBox(height: 12),
+    Expanded(child: loading ? const Center(child: CircularProgressIndicator()) : items.isEmpty ? const EmptyState(title: 'No products found', message: 'Try another search or filter.') : LayoutBuilder(builder: (_, constraints) { final columns = constraints.maxWidth >= 1200 ? 4 : constraints.maxWidth >= 800 ? 3 : 2; return GridView.builder(itemCount: items.length, gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: columns, crossAxisSpacing: 14, mainAxisSpacing: 14, childAspectRatio: .73), itemBuilder: (_, i) => ProductCard(items[i], onTap: () => productDetails(context, items[i], load))); }))
+  ]));
+}
+
+class ProductCard extends StatelessWidget {
+  final Product product;
+  final double? width;
+  final VoidCallback? onTap;
+  const ProductCard(this.product, {super.key, this.width, this.onTap});
+  @override
+  Widget build(BuildContext context) => SizedBox(width: width, child: Card(child: InkWell(onTap: onTap, borderRadius: BorderRadius.circular(18), child: Padding(padding: const EdgeInsets.all(10), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Expanded(child: Container(width: double.infinity, decoration: BoxDecoration(color: AppTheme.bg, borderRadius: BorderRadius.circular(14)), child: Icon(categoryIcon(product.category), size: 64, color: AppTheme.blue))), const SizedBox(height: 8), Text(product.brand, style: const TextStyle(fontSize: 12, color: AppTheme.muted)), Text(product.name, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w700)), const SizedBox(height: 5), Text(money(product.sellingPrice), style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w900)), const SizedBox(height: 5), Row(children: [StatusBadge(product.status), const Spacer(), Text('${product.quantity} left', style: const TextStyle(fontSize: 11, color: AppTheme.muted))])]))));
+}
+
+Future<void> productDetails(BuildContext context, Product product, VoidCallback refresh) async {
+  await showModalBottomSheet<void>(context: context, isScrollControlled: true, showDragHandle: true, builder: (_) => Padding(padding: const EdgeInsets.all(22), child: Wrap(children: [
+    Row(children: [Expanded(child: Text(product.name, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900))), StatusBadge(product.status)]),
+    Text('${product.brand} · ${product.category}', style: const TextStyle(color: AppTheme.muted)), const SizedBox(height: 15),
+    Container(height: 170, width: double.infinity, decoration: BoxDecoration(color: AppTheme.bg, borderRadius: BorderRadius.circular(20)), child: Icon(categoryIcon(product.category), size: 80, color: AppTheme.blue)),
+    const SizedBox(height: 15), Text(money(product.sellingPrice), style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900)),
+    Text('Cost ${money(product.purchasePrice)}  •  Profit ${money(product.profit)}  •  Margin ${product.margin.toStringAsFixed(1)}%'),
+    const SizedBox(height: 12), Wrap(spacing: 8, runSpacing: 8, children: [Chip(label: Text('Stock ${product.quantity}')), Chip(label: Text('Min ${product.minimumStock}')), Chip(label: Text('SKU ${product.sku}')), Chip(label: Text('Model ${product.model}'))]),
+    const SizedBox(height: 12), Row(children: [Expanded(child: OutlinedButton.icon(onPressed: () => adjustStock(context, product, refresh), icon: const Icon(Icons.inventory_2_outlined), label: const Text('Adjust Stock'))), const SizedBox(width: 8), Expanded(child: FilledButton.icon(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.point_of_sale), label: const Text('Sell'))]),
+    TextButton.icon(onPressed: () => productForm(context, product: product, onSaved: refresh), icon: const Icon(Icons.edit_outlined), label: const Text('Edit product')),
+    ExpansionTile(title: const Text('Stock history'), children: [FutureBuilder<List<Map<String, Object?>>>(future: AppDatabase.instance.movements(product.id!), builder: (_, snapshot) { final rows = snapshot.data ?? []; return Column(children: [for (final row in rows.take(20)) ListTile(title: Text('${row['type']} · ${row['quantity']}'), subtitle: Text('${row['note'] ?? ''}'))]); })]),
+  ]));
+}
+
+Future<void> adjustStock(BuildContext context, Product product, VoidCallback refresh) async {
+  final quantity = TextEditingController();
+  final reason = TextEditingController();
+  final ok = await showDialog<bool>(context: context, builder: (_) => AlertDialog(title: const Text('Adjust stock'), content: Column(mainAxisSize: MainAxisSize.min, children: [Text('Current stock: ${product.quantity}'), TextField(controller: quantity, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Quantity change', hintText: '+5 or -1')), TextField(controller: reason, decoration: const InputDecoration(labelText: 'Reason'))]), actions: [TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')), FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Save'))]));
+  if (ok != true) return;
+  try { await AppDatabase.instance.adjustStock(product, int.tryParse(quantity.text) ?? 0, reason.text.isEmpty ? 'Stock adjustment' : reason.text); refresh(); } catch (error) { if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error.toString()))); }
+}
+
+Future<void> productForm(BuildContext context, {Product? product, VoidCallback? onSaved}) async {
+  final fields = <String, TextEditingController>{};
+  for (final key in ['name', 'brand', 'category', 'model', 'sku', 'barcode', 'purchase', 'selling', 'mrp', 'quantity', 'minimum']) fields[key] = TextEditingController();
+  fields['name']!.text = product?.name ?? ''; fields['brand']!.text = product?.brand ?? ''; fields['category']!.text = product?.category ?? ''; fields['model']!.text = product?.model ?? ''; fields['sku']!.text = product?.sku ?? ''; fields['barcode']!.text = product?.barcode ?? '';
+  fields['purchase']!.text = product?.purchasePrice.toString() ?? ''; fields['selling']!.text = product?.sellingPrice.toString() ?? ''; fields['mrp']!.text = product?.mrp.toString() ?? ''; fields['quantity']!.text = product?.quantity.toString() ?? '0'; fields['minimum']!.text = product?.minimumStock.toString() ?? '2';
+  final saved = await showDialog<bool>(context: context, builder: (_) => AlertDialog(title: Text(product == null ? 'Add product' : 'Edit product'), content: SizedBox(width: 520, child: SingleChildScrollView(child: Column(children: [for (final key in fields.keys) Padding(padding: const EdgeInsets.only(bottom: 8), child: TextField(controller: fields[key], keyboardType: ['purchase', 'selling', 'mrp', 'quantity', 'minimum'].contains(key) ? TextInputType.number : TextInputType.text, decoration: InputDecoration(labelText: key[0].toUpperCase() + key.substring(1)))]))), actions: [TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')), FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Save'))]));
+  if (saved != true) return;
+  final values = <String, Object?>{'name': fields['name']!.text.trim(), 'brand': fields['brand']!.text.trim(), 'category': fields['category']!.text.trim(), 'model': fields['model']!.text.trim(), 'sku': fields['sku']!.text.trim(), 'barcode': fields['barcode']!.text.trim(), 'purchase_price': double.tryParse(fields['purchase']!.text) ?? 0, 'selling_price': double.tryParse(fields['selling']!.text) ?? 0, 'mrp': double.tryParse(fields['mrp']!.text) ?? 0, 'quantity': int.tryParse(fields['quantity']!.text) ?? 0, 'minimum_stock': int.tryParse(fields['minimum']!.text) ?? 2, 'supplier': product?.supplier ?? '', 'warranty': product?.warranty ?? '1 Year', 'specs': product?.specs ?? ''};
+  try { if (product == null) { await AppDatabase.instance.addProduct(values); } else { await AppDatabase.instance.updateProduct(product.id!, values); } onSaved?.call(); } catch (error) { if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error.toString()))); }
+}
+
+class PurchasesPage extends StatelessWidget {
+  const PurchasesPage({super.key});
+  @override
+  Widget build(BuildContext context) => SimpleModulePage(title: 'Purchases', icon: Icons.local_shipping_outlined, description: 'Purchase history, suppliers and incoming stock are stored offline.');
+}
+
+class SalesPage extends StatelessWidget {
+  const SalesPage({super.key});
+  @override
+  Widget build(BuildContext context) => SimpleModulePage(title: 'Sales & POS', icon: Icons.point_of_sale_outlined, description: 'Fast checkout, cart and sales workflows are ready for the next module pass.');
+}
+
+class MorePage extends StatelessWidget {
+  const MorePage({super.key});
+  @override
+  Widget build(BuildContext context) => PageFrame(child: ListView(children: [Text('More', style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w900)), const SizedBox(height: 18), for (final item in const [('Customers', Icons.people_outline), ('Suppliers', Icons.business_outlined), ('Expenses', Icons.receipt_long_outlined), ('Reports', Icons.bar_chart_outlined), ('Monthly Books', Icons.calendar_month_outlined), ('Warranty', Icons.verified_outlined), ('Dead Stock', Icons.hourglass_empty_outlined), ('Backup & Restore', Icons.backup_outlined), ('Settings', Icons.settings_outlined)]) Card(child: ListTile(leading: Icon(item.$2, color: AppTheme.blue), title: Text(item.$1), trailing: const Icon(Icons.chevron_right)))]));
+}
+
+class SimpleModulePage extends StatelessWidget {
+  final String title;
+  final IconData icon;
+  final String description;
+  const SimpleModulePage({super.key, required this.title, required this.icon, required this.description});
+  @override
+  Widget build(BuildContext context) => PageFrame(child: Center(child: Card(child: Padding(padding: const EdgeInsets.all(30), child: Column(mainAxisSize: MainAxisSize.min, children: [Icon(icon, size: 56, color: AppTheme.blue), const SizedBox(height: 14), Text(title, style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900)), const SizedBox(height: 8), Text(description, textAlign: TextAlign.center, style: const TextStyle(color: AppTheme.muted))]))));
+}
+
+class EmptyState extends StatelessWidget {
+  final String title;
+  final String message;
+  const EmptyState({super.key, required this.title, required this.message});
+  @override
+  Widget build(BuildContext context) => Center(child: Padding(padding: const EdgeInsets.all(30), child: Column(mainAxisSize: MainAxisSize.min, children: [const Icon(Icons.inventory_2_outlined, size: 52, color: AppTheme.muted), const SizedBox(height: 12), Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)), const SizedBox(height: 6), Text(message, textAlign: TextAlign.center, style: const TextStyle(color: AppTheme.muted))])));
+}
+
+IconData categoryIcon(String category) {
+  final value = category.toLowerCase();
+  if (value.contains('mobile')) return Icons.smartphone;
+  if (value.contains('laptop')) return Icons.laptop_mac;
+  if (value.contains('television')) return Icons.tv;
+  if (value.contains('refrigerator')) return Icons.kitchen;
+  if (value.contains('conditioner')) return Icons.ac_unit;
+  if (value.contains('washing')) return Icons.local_laundry_service;
+  if (value.contains('audio')) return Icons.headphones;
+  if (value.contains('camera')) return Icons.camera_alt;
+  if (value.contains('printer')) return Icons.print;
+  if (value.contains('network')) return Icons.router;
+  if (value.contains('storage')) return Icons.storage;
+  return Icons.devices_other;
+}
