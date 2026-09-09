@@ -1,20 +1,34 @@
-# Inventory-
+# Inventory — ElectroMart Electronics
 
-Premium offline-first electronics shop inventory and POS for Android and Windows.
+Premium offline-first electronics shop inventory and POS application built with Flutter and SQLite.
 
-## Highlights
-- Visual retail-style product catalog
-- Category → brand → product navigation
-- SQLite local persistence
-- Purchases, sales/POS and stock ledger
-- Weighted-average cost and profit calculations
-- Suppliers, customers, expenses and monthly books
-- Low-stock and dead-stock views
-- Barcode scanner integration
-- CSV inventory export
-- Professional invoice PDF generation
-- Demo store seed data
-- Responsive mobile and desktop layouts
+## Core modules
+
+- Premium retail-style Home, Inventory, Categories and Product catalog
+- Category and brand-oriented product discovery
+- Product pricing, margin, stock status, minimum stock and archive workflow
+- Atomic stock ledger for purchases, sales, adjustments and opening stock
+- Fast POS with Cash, UPI, Card, Bank Transfer and Credit payment choices
+- Purchase receiving and supplier invoice records
+- Customer and supplier directories
+- Expenses and monthly books
+- Inventory, sales, low-stock and monthly reporting views
+- Warranty, dead-stock, users/permissions and notification surfaces
+- Barcode scanner integration on supported mobile devices
+- Professional printable sale invoice PDF
+- CSV and Excel inventory export service
+- Local SQLite database and demo-store seed data
+- Responsive mobile bottom navigation and desktop navigation rail
+
+## Demo store
+
+The first run seeds ElectroMart Electronics with realistic Indian electronics categories, brands, products, suppliers, customers, stock movements and six months of transaction history.
+
+Prices are demo values, not live market prices.
+
+## Data integrity
+
+Purchases and sales use SQLite transactions so inventory updates and ledger entries succeed or roll back together. Products with transaction history are archived rather than destructively deleted.
 
 ## Run
 
@@ -23,12 +37,4 @@ flutter pub get
 flutter run
 ```
 
-For Windows:
-
-```bash
-flutter run -d windows
-```
-
-Core shop operations do not require an internet connection. Remote images/cloud backup are intentionally optional.
-
-> Demo prices and transactions are sample data, not live market prices.
+Android is the primary runtime. Desktop SQLite support requires the platform-specific sqflite FFI setup appropriate for the target desktop build.
