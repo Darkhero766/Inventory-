@@ -17,14 +17,11 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
           cache: true
-
       - run: flutter pub get
-
       - name: Repair UI source syntax
         run: |
           python3 - <<'PY'
@@ -32,6 +29,7 @@ jobs:
           p = Path('lib/main.dart')
           s = p.read_text()
           s = s.replace('    ]))),\n    actions:', '    ])))),\n    actions:')
+          s = s.replace('onCheckout: checkout))));', 'onCheckout: checkout)))));')
           start = s.find('Future<void> showProductDetails(')
           end = s.find('class _DetailStat', start)
           if start >= 0 and end > start:
@@ -49,7 +47,6 @@ jobs:
             git commit -m "fix: repair redesigned inventory UI source"
             git push
           fi
-
       - name: Restore last known-good UI source
         if: hashFiles('.ci/recover-ui') != ''
         run: |
@@ -60,21 +57,17 @@ jobs:
           git add lib/main.dart .ci/recover-ui
           git commit -m "fix: restore stable inventory UI source"
           git push
-
       - run: flutter analyze
       - run: flutter test
-
       - run: flutter create --platforms=android --project-name inventory_shop .
       - name: Enable Android internet access
         run: sed -i '/<manifest/a\    <uses-permission android:name="android.permission.INTERNET" />' android/app/src/main/AndroidManifest.xml
       - run: sed -i 's/compileSdk = flutter.compileSdkVersion/compileSdk = 36/' android/app/build.gradle.kts
       - run: flutter build apk --release
-
       - uses: actions/upload-artifact@v4
         with:
           name: inventory-android-apk
           path: build/app/outputs/flutter-apk/app-release.apk
-
       - name: Publish Android release
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v2
