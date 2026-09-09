@@ -18,42 +18,12 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Repair UI syntax
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          p = Path('lib/main.dart')
-          s = p.read_text()
-          s = s.replace("const Expanded(child: Text('Current order', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900)), if", "const Expanded(child: Text('Current order', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900))), if", 1)
-          s = s.replace("const Expanded(child: Text('Current order', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),),", "const Expanded(child: Text('Current order', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900))),,", 1)
-          s = s.replace("\nclass _SellProductCardPlaceholder {}\n", "\n")
-          p.write_text(s)
-          PY
-          if ! git diff --quiet -- lib/main.dart; then
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add lib/main.dart
-            git commit -m "fix: repair inventory dashboard cart syntax"
-            git push
-          fi
-
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
           cache: true
 
       - run: flutter pub get
-
-      - name: Apply safe Dart fixes
-        run: |
-          dart fix --apply
-          if ! git diff --quiet -- lib; then
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add lib
-            git commit -m "fix: apply Dart lint-safe UI fixes"
-            git push
-          fi
 
       - name: Restore last known-good UI source
         if: hashFiles('.ci/recover-ui') != ''
