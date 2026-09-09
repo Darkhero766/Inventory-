@@ -7,12 +7,12 @@ String money(num value) => NumberFormat.currency(locale: 'en_IN', symbol: '₹',
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await AppDatabase.instance.db;
-  runApp(const InventoryApp());
+  runApp(const InventoryApp(loadDatabase: true));
 }
 
 class InventoryApp extends StatelessWidget {
-  const InventoryApp({super.key});
+  final bool loadDatabase;
+  const InventoryApp({super.key, this.loadDatabase = false});
 
   @override
   Widget build(BuildContext context) {
@@ -34,13 +34,14 @@ class InventoryApp extends StatelessWidget {
           ),
         ),
       ),
-      home: const AppShell(),
+      home: AppShell(loadDatabase: loadDatabase),
     );
   }
 }
 
 class AppShell extends StatefulWidget {
-  const AppShell({super.key});
+  final bool loadDatabase;
+  const AppShell({super.key, this.loadDatabase = false});
 
   @override
   State<AppShell> createState() => _AppShellState();
@@ -48,7 +49,6 @@ class AppShell extends StatefulWidget {
 
 class _AppShellState extends State<AppShell> {
   int index = 0;
-  final pages = const [HomePage(), InventoryPage(), PurchasesPage(), SalesPage(), MorePage()];
   final labels = const ['Home', 'Inventory', 'Purchases', 'Sales', 'More'];
   final icons = const [
     Icons.home_outlined,
@@ -60,6 +60,13 @@ class _AppShellState extends State<AppShell> {
 
   @override
   Widget build(BuildContext context) {
+    final pages = [
+      HomePage(loadDatabase: widget.loadDatabase),
+      const InventoryPage(),
+      const PurchasesPage(),
+      const SalesPage(),
+      const MorePage(),
+    ];
     final wide = MediaQuery.sizeOf(context).width >= 900;
     return Scaffold(
       body: wide
@@ -159,7 +166,8 @@ class StatusBadge extends StatelessWidget {
 }
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  final bool loadDatabase;
+  const HomePage({super.key, this.loadDatabase = true});
   @override
   State<HomePage> createState() => _HomePageState();
 }
@@ -172,20 +180,29 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    load();
+    if (widget.loadDatabase) load();
   }
 
   Future<void> load() async {
-    final db = await AppDatabase.instance.db;
-    final list = await AppDatabase.instance.products();
-    final s = await db.rawQuery('SELECT COALESCE(SUM(total),0) value FROM sales');
-    final p = await db.rawQuery('SELECT COALESCE(SUM(total),0) value FROM purchases');
-    if (!mounted) return;
-    setState(() {
-      products = list;
-      sales = (s.first['value'] as num?)?.toDouble() ?? 0;
-      purchases = (p.first['value'] as num?)?.toDouble() ?? 0;
-    });
+    try {
+      final db = await AppDatabase.instance.db;
+      final list = await AppDatabase.instance.products();
+      final s = await db.rawQuery('SELECT COALESCE(SUM(total),0) value FROM sales');
+      final p = await db.rawQuery('SELECT COALESCE(SUM(total),0) value FROM purchases');
+      if (!mounted) return;
+      setState(() {
+        products = list;
+        sales = (s.first['value'] as num?)?.toDouble() ?? 0;
+        purchases = (p.first['value'] as num?)?.toDouble() ?? 0;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        products = [];
+        sales = 0;
+        purchases = 0;
+      });
+    }
   }
 
   @override
