@@ -31,6 +31,8 @@ jobs:
           s = s.replace('    ]))),\n    actions:', '    ])))),\n    actions:')
           s = s.replace('onCheckout: checkout))));', 'onCheckout: checkout)))));')
           s = s.replace('=> const Frame(', '=> Frame(')
+          s = s.replace('child: ListView(children: [', 'child: ListView(children: const [')
+          s = s.replace('DropdownButtonFormField<String>(value:', 'DropdownButtonFormField<String>(initialValue:')
           start = s.find('Future<void> showProductDetails(')
           end = s.find('class _DetailStat', start)
           if start >= 0 and end > start:
@@ -45,7 +47,7 @@ jobs:
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add lib/main.dart
-            git commit -m "fix: repair redesigned inventory UI source"
+            git commit -m "fix: clean inventory UI analyzer issues"
             git push
           fi
       - name: Restore last known-good UI source
