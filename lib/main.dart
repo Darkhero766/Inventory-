@@ -1565,7 +1565,7 @@ class _CartPanel extends StatelessWidget {
 class PurchasesPage extends StatelessWidget {
   const PurchasesPage({super.key});
   @override
-  Widget build(BuildContext context) => const Frame(
+  Widget build(BuildContext context) => Frame(
           child: ListView(children: [
         PageHeader(
             title: 'Purchases',
@@ -1592,7 +1592,7 @@ class PurchasesPage extends StatelessWidget {
 class MorePage extends StatelessWidget {
   const MorePage({super.key});
   @override
-  Widget build(BuildContext context) => const Frame(
+  Widget build(BuildContext context) => Frame(
           child: ListView(children: [
         PageHeader(
             title: 'More', subtitle: 'Business tools, reports and settings'),
