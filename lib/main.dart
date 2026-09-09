@@ -1162,7 +1162,7 @@ class _ProductFormDialogState extends State<_ProductFormDialog> {
   Widget _dropdown(String label, String value, List<String> values,
           ValueChanged<String?> onChanged) =>
       DropdownButtonFormField<String>(
-          value: value,
+          initialValue: value,
           isExpanded: true,
           decoration: InputDecoration(labelText: label),
           items: [
