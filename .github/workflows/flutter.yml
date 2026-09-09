@@ -24,7 +24,8 @@ jobs:
           from pathlib import Path
           p = Path('lib/main.dart')
           s = p.read_text()
-          s = s.replace("const Expanded(child: Text('Current order', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),),", "const Expanded(child: Text('Current order', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),", 1)
+          s = s.replace("const Expanded(child: Text('Current order', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900)), if", "const Expanded(child: Text('Current order', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900))), if", 1)
+          s = s.replace("const Expanded(child: Text('Current order', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),),", "const Expanded(child: Text('Current order', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900))),,", 1)
           s = s.replace("\nclass _SellProductCardPlaceholder {}\n", "\n")
           p.write_text(s)
           PY
