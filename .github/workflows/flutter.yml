@@ -18,6 +18,9 @@ jobs:
       - run: flutter pub get
       - run: flutter analyze
       - run: flutter test
+      # The repository does not commit generated Flutter platform scaffolding.
+      # Generate Android files in CI so the real release APK can still be built.
+      - run: flutter create --platforms=android --project-name inventory_shop .
       - run: flutter build apk --release
       - uses: actions/upload-artifact@v4
         with:
