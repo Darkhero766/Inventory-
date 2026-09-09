@@ -24,12 +24,13 @@ jobs:
       - run: flutter pub get
 
       - name: Restore last known-good UI source
-        if: github.sha == '98c3349abe27670436daf688c21598b85abc7b62'
+        if: hashFiles('.ci/recover-ui') != ''
         run: |
           git checkout 34e98f3ab9674afc439110d7ca08a45c154e4cdd -- lib/main.dart
+          rm -f .ci/recover-ui
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add lib/main.dart
+          git add lib/main.dart .ci/recover-ui
           git commit -m "fix: restore stable inventory UI source"
           git push
 
