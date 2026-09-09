@@ -29,7 +29,7 @@ class InventoryApp extends StatelessWidget {
           filled: true,
           fillColor: Colors.white,
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.all(Radius.circular(16)),
+            borderRadius: BorderRadius.circular(16),
             borderSide: BorderSide.none,
           ),
         ),
@@ -145,14 +145,11 @@ class StatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Color color;
-    if (status == 'IN STOCK') {
-      color = Colors.green;
-    } else if (status == 'LOW STOCK') {
-      color = Colors.orange;
-    } else {
-      color = Colors.red;
-    }
+    final Color color = status == 'IN STOCK'
+        ? Colors.green
+        : status == 'LOW STOCK'
+            ? Colors.orange
+            : Colors.red;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
       decoration: BoxDecoration(color: color.withAlpha(24), borderRadius: BorderRadius.circular(20)),
@@ -163,7 +160,6 @@ class StatusBadge extends StatelessWidget {
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
-
   @override
   State<HomePage> createState() => _HomePageState();
 }
@@ -277,7 +273,6 @@ class Metric extends StatelessWidget {
   final String value;
   final IconData icon;
   const Metric(this.title, this.value, this.icon, {super.key});
-
   @override
   Widget build(BuildContext context) {
     return SizedBox(
@@ -304,7 +299,6 @@ class InventoryPage extends StatefulWidget {
   const InventoryPage({super.key, this.query, this.category});
   final String? query;
   final String? category;
-
   @override
   State<InventoryPage> createState() => _InventoryPageState();
 }
@@ -341,7 +335,6 @@ class _InventoryPageState extends State<InventoryPage> {
         ),
         const SizedBox(height: 16),
         TextField(
-          controller: TextEditingController(text: query),
           onChanged: (value) {
             query = value;
             load();
@@ -365,7 +358,7 @@ class _InventoryPageState extends State<InventoryPage> {
                       itemBuilder: (_, i) => ProductCard(items[i], onTap: () => showProductDetails(context, items[i], load)),
                     ),
         ),
-      ],),
+      ]),
     );
   }
 
@@ -432,7 +425,6 @@ class ProductCard extends StatelessWidget {
   final Product product;
   final VoidCallback? onTap;
   const ProductCard(this.product, {super.key, this.onTap});
-
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -440,22 +432,15 @@ class ProductCard extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.all(10),
+          padding: const EdgeInsets.all(14),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Expanded(
-              child: Container(
-                width: double.infinity,
-                decoration: BoxDecoration(color: const Color(0xFFF0F2F6), borderRadius: BorderRadius.circular(14)),
-                child: Icon(categoryIcon(product.category), size: 64),
-              ),
-            ),
-            const SizedBox(height: 9),
+            Expanded(child: Center(child: Icon(categoryIcon(product.category), size: 64))),
             Text(product.brand, style: const TextStyle(color: Colors.grey, fontSize: 12)),
             Text(product.name, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w800)),
-            const SizedBox(height: 5),
-            Text(money(product.sellingPrice), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
-            const SizedBox(height: 5),
-            Row(children: [StatusBadge(product.status), const Spacer(), Text('${product.quantity} left', style: const TextStyle(color: Colors.grey, fontSize: 11))]),
+            const SizedBox(height: 7),
+            Text(money(product.sellingPrice), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18)),
+            const SizedBox(height: 6),
+            Row(children: [Expanded(child: Text('Stock ${product.quantity}', style: const TextStyle(fontSize: 12))), StatusBadge(product.status)]),
           ]),
         ),
       ),
@@ -463,56 +448,26 @@ class ProductCard extends StatelessWidget {
   }
 }
 
-Future<void> showProductDetails(BuildContext context, Product product, VoidCallback refresh) async {
+Future<void> showProductDetails(BuildContext context, Product p, Future<void> Function() refresh) async {
   await showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
-    showDragHandle: true,
     builder: (_) => Padding(
-      padding: const EdgeInsets.all(22),
+      padding: const EdgeInsets.all(24),
       child: Wrap(children: [
-        Row(children: [Expanded(child: Text(product.name, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900))), StatusBadge(product.status)]),
-        Text('${product.brand} · ${product.category}', style: const TextStyle(color: Colors.grey)),
-        const SizedBox(height: 16),
-        Container(height: 170, width: double.infinity, decoration: BoxDecoration(color: const Color(0xFFF0F2F6), borderRadius: BorderRadius.circular(20)), child: Icon(categoryIcon(product.category), size: 80)),
-        const SizedBox(height: 16),
-        Text(money(product.sellingPrice), style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900)),
-        Text('Cost ${money(product.purchasePrice)}  •  Profit ${money(product.profit)}  •  Margin ${product.margin.toStringAsFixed(1)}%'),
-        const SizedBox(height: 12),
-        Wrap(spacing: 8, children: [Chip(label: Text('Stock ${product.quantity}')), Chip(label: Text('Min ${product.minimumStock}')), Chip(label: Text('SKU ${product.sku}'))]),
-        const SizedBox(height: 12),
+        ListTile(leading: CircleAvatar(child: Icon(categoryIcon(p.category))), title: Text(p.name, style: const TextStyle(fontWeight: FontWeight.w900)), subtitle: Text('${p.brand} · ${p.sku}')),
+        ListTile(title: const Text('Selling price'), trailing: Text(money(p.sellingPrice))),
+        ListTile(title: const Text('Purchase price'), trailing: Text(money(p.purchasePrice))),
+        ListTile(title: const Text('Stock'), trailing: Text('${p.quantity} · ${p.status}')),
+        const SizedBox(height: 8),
         Row(children: [
-          Expanded(child: OutlinedButton.icon(onPressed: () => adjustStock(context, product, refresh), icon: const Icon(Icons.inventory_2_outlined), label: const Text('Adjust Stock'))),
-          const SizedBox(width: 8),
-          Expanded(child: FilledButton.icon(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.point_of_sale), label: const Text('Sell'))),
+          Expanded(child: OutlinedButton(onPressed: () async { Navigator.pop(context); await AppDatabase.instance.adjustStock(p.id, 1, 'ADJUSTMENT', 'Manual stock addition'); await refresh(); }, child: const Text('Add stock'))),
+          const SizedBox(width: 10),
+          Expanded(child: FilledButton(onPressed: () async { Navigator.pop(context); await AppDatabase.instance.adjustStock(p.id, -1, 'ADJUSTMENT', 'Manual stock removal'); await refresh(); }, child: const Text('Remove stock'))),
         ]),
       ]),
     ),
   );
-}
-
-Future<void> adjustStock(BuildContext context, Product product, VoidCallback refresh) async {
-  final controller = TextEditingController();
-  final reason = TextEditingController();
-  final ok = await showDialog<bool>(
-    context: context,
-    builder: (_) => AlertDialog(
-      title: const Text('Adjust stock'),
-      content: Column(mainAxisSize: MainAxisSize.min, children: [
-        Text('Current stock: ${product.quantity}'),
-        TextField(controller: controller, keyboardType: const TextInputType.numberWithOptions(signed: true), decoration: const InputDecoration(labelText: 'Quantity change', hintText: '+5 or -1')),
-        TextField(controller: reason, decoration: const InputDecoration(labelText: 'Reason')),
-      ]),
-      actions: [TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')), FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Save'))],
-    ),
-  );
-  if (ok != true) return;
-  try {
-    await AppDatabase.instance.adjustStock(product, int.tryParse(controller.text) ?? 0, reason.text.trim().isEmpty ? 'Stock adjustment' : reason.text.trim());
-    refresh();
-  } catch (e) {
-    if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
-  }
 }
 
 class PurchasesPage extends StatelessWidget {
@@ -566,15 +521,63 @@ class _SalesPageState extends State<SalesPage> {
   @override
   Widget build(BuildContext context) {
     final total = cart.fold<double>(0, (sum, x) => sum + (x['price'] as num).toDouble() * (x['quantity'] as int));
-    return Frame(child: Column(children: [
-      const PageHeader(title: 'Sales', subtitle: 'Fast point of sale'),
-      const SizedBox(height: 16),
-      Expanded(child: Row(children: [
-        Expanded(child: GridView.builder(itemCount: products.length, gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: MediaQuery.sizeOf(context).width >= 1200 ? 4 : 2, crossAxisSpacing: 12, mainAxisSpacing: 12, childAspectRatio: .9), itemBuilder: (_, i) => InkWell(onTap: () => add(products[i]), child: ProductCard(products[i])))),
-        const SizedBox(width: 16),
-        SizedBox(width: MediaQuery.sizeOf(context).width >= 900 ? 340 : 0, child: MediaQuery.sizeOf(context).width >= 900 ? Card(child: Padding(padding: const EdgeInsets.all(16), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const Text('Cart', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900)), const SizedBox(height: 12), Expanded(child: ListView(children: [for (final x in cart) ListTile(title: Text(x['name'].toString()), subtitle: Text('${x['quantity']} × ${money(x['price'] as num)}'))])), const Divider(), Text('Total ${money(total)}', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900)), const SizedBox(height: 10), SizedBox(width: double.infinity, child: FilledButton(onPressed: cart.isEmpty ? null : checkout, child: const Text('Complete Sale')))])) : null),
-      ])),
-    ]));
+    final wide = MediaQuery.sizeOf(context).width >= 900;
+    final productGrid = Expanded(
+      child: GridView.builder(
+        itemCount: products.length,
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: MediaQuery.sizeOf(context).width >= 1200 ? 4 : 2,
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 12,
+          childAspectRatio: .9,
+        ),
+        itemBuilder: (_, i) => InkWell(onTap: () => add(products[i]), child: ProductCard(products[i])),
+      ),
+    );
+    final cartPanel = Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Cart', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900)),
+            const SizedBox(height: 12),
+            Expanded(
+              child: ListView(
+                children: [
+                  for (final x in cart)
+                    ListTile(
+                      title: Text(x['name'].toString()),
+                      subtitle: Text('${x['quantity']} × ${money(x['price'] as num)}'),
+                    ),
+                ],
+              ),
+            ),
+            const Divider(),
+            Text('Total ${money(total)}', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900)),
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton(onPressed: cart.isEmpty ? null : checkout, child: const Text('Complete Sale')),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    return Frame(
+      child: Column(
+        children: [
+          const PageHeader(title: 'Sales', subtitle: 'Fast point of sale'),
+          const SizedBox(height: 16),
+          Expanded(
+            child: wide
+                ? Row(children: [productGrid, const SizedBox(width: 16), SizedBox(width: 340, child: cartPanel)])
+                : Column(children: [productGrid, const SizedBox(height: 10), SizedBox(width: double.infinity, height: 90, child: FilledButton(onPressed: cart.isEmpty ? null : checkout, child: Text('Cart · ${money(total)}')))]),
+          ),
+        ],
+      ),
+    );
   }
 }
 
