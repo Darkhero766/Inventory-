@@ -1,4 +1,4 @@
-name: Flutter CI
+name: Flutter CI & Android Release
 
 on:
   push:
@@ -7,24 +7,45 @@ on:
     branches: [main]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   android:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
+          cache: true
+
       - run: flutter pub get
       - run: flutter analyze
       - run: flutter test
+
       # The repository does not commit generated Flutter platform scaffolding.
-      # Generate Android files in CI so the real release APK can still be built.
+      # Generate Android files in CI so the release APK can still be built.
       - run: flutter create --platforms=android --project-name inventory_shop .
+
       # Current Flutter Android dependencies require API 36 for AAR metadata checks.
       - run: sed -i 's/compileSdk = flutter.compileSdkVersion/compileSdk = 36/' android/app/build.gradle.kts
+
       - run: flutter build apk --release
+
       - uses: actions/upload-artifact@v4
         with:
           name: inventory-android-apk
           path: build/app/outputs/flutter-apk/app-release.apk
+
+      # Every successful push to main gets a downloadable GitHub Release.
+      # The run number makes each release unique even when pubspec version is unchanged.
+      - name: Publish Android release
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: android-${{ github.run_number }}
+          name: Inventory Android ${{ github.run_number }}
+          generate_release_notes: true
+          files: build/app/outputs/flutter-apk/app-release.apk
