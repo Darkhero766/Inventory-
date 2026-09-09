@@ -43,6 +43,17 @@ jobs:
 
       - run: flutter pub get
 
+      - name: Apply safe Dart fixes
+        run: |
+          dart fix --apply
+          if ! git diff --quiet -- lib; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add lib
+            git commit -m "fix: apply Dart lint-safe UI fixes"
+            git push
+          fi
+
       - name: Restore last known-good UI source
         if: hashFiles('.ci/recover-ui') != ''
         run: |
