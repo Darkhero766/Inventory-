@@ -18,6 +18,27 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Repair UI syntax
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('lib/main.dart')
+          s = p.read_text()
+          old = "trailing: IconButton(onPressed: () => removeAt(i), icon: const Icon(Icons.close, size: 18)); })),"
+          new = "trailing: IconButton(onPressed: () => removeAt(i), icon: const Icon(Icons.close, size: 18))); })),"
+          if old in s:
+              s = s.replace(old, new, 1)
+          s = s.replace("\nclass _SellProductCardPlaceholder {}\n", "\n")
+          p.write_text(s)
+          PY
+          if ! git diff --quiet -- lib/main.dart; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add lib/main.dart
+            git commit -m "fix: repair inventory UI syntax"
+            git push
+          fi
+
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
