@@ -15,3 +15,5 @@ class Product {
 }
 
 class StockMovement { final String type; final int quantity; final String product; final DateTime date; final String note; const StockMovement({required this.type,required this.quantity,required this.product,required this.date,required this.note}); }
+
+extension FirstOrNull<T> on Iterable<T> { T? get firstOrNull => isEmpty ? null : first; }
