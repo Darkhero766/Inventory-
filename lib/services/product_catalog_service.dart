@@ -23,7 +23,7 @@ class ProductCatalogService {
       final r=await http.get(uri,headers:const {'Accept':'application/json','Api-User-Agent':'InventoryShop/3.0'}).timeout(const Duration(seconds:6));
       if(r.statusCode!=200)return const [];
       final data=jsonDecode(r.body) as Map<String,dynamic>;
-      final pages=data['pages'] as List<dynamic>???const [];
+      final pages=data['pages'] as List<dynamic>? ?? const [];
       final out=<ProductSuggestion>[];
       for(final raw in pages){
         final m=raw as Map<String,dynamic>;final title=m['title']?.toString().trim()??'';final desc=m['description']?.toString().trim()??'';if(title.isEmpty)continue;
@@ -44,8 +44,8 @@ class ProductCatalogService {
   }
 
   static int _score(String title,String desc,String q,String brand,String category){
-    final t=title.toLowerCase(),d=desc.toLowerCase();var s=0;
-    final b=brand.toLowerCase();if(b.isNotEmpty){if(t.contains(b))s+=100;else if(d.contains(b))s+=35;else return -1000;}
+    final t=title.toLowerCase(),d=desc.toLowerCase();var s=0;final b=brand.toLowerCase();
+    if(b.isNotEmpty){if(t.contains(b))s+=100;else if(d.contains(b))s+=35;else return -1000;}
     final a=aliases[category]??(category.isEmpty?const <String>[]:[category.toLowerCase()]);if(a.isNotEmpty){if(a.any((x)=>'$t $d'.contains(x)))s+=60;else return -500;}
     final tokens=q.toLowerCase().split(RegExp(r'[^a-z0-9]+')).where((x)=>x.length>=2);for(final x in tokens){if(t.contains(x))s+=35;if(d.contains(x))s+=8;}if(t==q.toLowerCase())s+=80;if(t.contains(q.toLowerCase()))s+=55;return s;
   }
@@ -60,9 +60,9 @@ class ProductCatalogService {
     try{
       final uri=Uri.https('commons.wikimedia.org','/w/api.php',{'action':'query','generator':'search','gsrsearch':query,'gsrnamespace':'6','gsrlimit':'8','prop':'imageinfo','iiprop':'url|mime','iiurlwidth':'640','format':'json','origin':'*'});
       final r=await http.get(uri,headers:const {'Accept':'application/json','User-Agent':'InventoryShop/3.0'}).timeout(const Duration(seconds:6));if(r.statusCode!=200)return '';
-      final data=jsonDecode(r.body) as Map<String,dynamic>;final pages=data['query']?['pages'] as Map<String,dynamic>?;if(pages==null)return '';
+      final data=jsonDecode(r.body) as Map<String,dynamic>;final queryData=data['query'] as Map<String,dynamic>?;final pages=queryData?['pages'] as Map<String,dynamic>?;if(pages==null)return '';
       final words=query.toLowerCase().split(RegExp(r'[^a-z0-9]+')).where((x)=>x.length>=2).toList();String best='';var bestScore=-1;
-      for(final raw in pages.values){final m=raw as Map<String,dynamic>;final title=m['title']?.toString().toLowerCase()??'';final info=(m['imageinfo'] as List<dynamic>?)?.isNotEmpty==true?(m['imageinfo'] as List<dynamic>).first as Map<String,dynamic>:null;if(info==null)continue;final mime=info['mime']?.toString()??'';if(!mime.startsWith('image/'))continue;final url=_url(info['thumburl']?.toString()??info['url']?.toString()??'');if(url.isEmpty)continue;var score=0;for(final w in words){if(title.contains(w))score+=20;}if(title.contains('logo')||title.contains('icon'))score-=20;if(title.contains('portrait')||title.contains('person'))score-=50;if(score>bestScore){bestScore=score;best=url;}}
+      for(final raw in pages.values){final m=raw as Map<String,dynamic>;final title=m['title']?.toString().toLowerCase()??'';final list=m['imageinfo'] as List<dynamic>?;if(list==null||list.isEmpty)continue;final info=list.first as Map<String,dynamic>;final mime=info['mime']?.toString()??'';if(!mime.startsWith('image/'))continue;final url=_url(info['thumburl']?.toString()??info['url']?.toString()??'');if(url.isEmpty)continue;var score=0;for(final w in words){if(title.contains(w))score+=20;}if(title.contains('logo')||title.contains('icon'))score-=20;if(title.contains('portrait')||title.contains('person'))score-=50;if(score>bestScore){bestScore=score;best=url;}}
       return bestScore>0?best:'';
     }catch(_){return '';}
   }
