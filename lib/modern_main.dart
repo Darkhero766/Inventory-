@@ -1,53 +1,1667 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:sqflite/sqflite.dart';
+
 import 'data/database.dart';
 import 'models/models.dart';
 import 'services/product_catalog_service.dart';
 
-const blue=Color(0xFF4B63E6), purple=Color(0xFF7659F6), green=Color(0xFF18A56B), orange=Color(0xFFE28A19), red=Color(0xFFE05252), ink=Color(0xFF171923), muted=Color(0xFF747783), bg=Color(0xFFF5F6FA);
-String money(num n)=>NumberFormat.currency(locale:'en_IN',symbol:'₹',decimalDigits:0).format(n);
+const primary = Color(0xFF4B63E6);
+const purple = Color(0xFF7659F6);
+const green = Color(0xFF18A56B);
+const orange = Color(0xFFE28A19);
+const red = Color(0xFFE05252);
+const ink = Color(0xFF171923);
+const muted = Color(0xFF747783);
+const background = Color(0xFFF5F6FA);
 
-void main()=>runApp(const ModernApp());
-class ModernApp extends StatelessWidget{const ModernApp({super.key});@override Widget build(BuildContext c)=>MaterialApp(debugShowCheckedModeBanner:false,title:'Inventory POS',theme:ThemeData(useMaterial3:true,scaffoldBackgroundColor:bg,colorScheme:ColorScheme.fromSeed(seedColor:blue),fontFamily:'Inter',cardTheme:CardThemeData(elevation:0,color:Colors.white,margin:EdgeInsets.zero,shape:RoundedRectangleBorder(borderRadius:BorderRadius.circular(20))),navigationBarTheme:NavigationBarThemeData(height:76,backgroundColor:Colors.white,indicatorColor:blue.withAlpha(22),labelTextStyle:const WidgetStatePropertyAll(TextStyle(fontWeight:FontWeight.w800,fontSize:12))),inputDecorationTheme:InputDecorationTheme(filled:true,fillColor:Colors.white,border:OutlineInputBorder(borderRadius:BorderRadius.circular(16),borderSide:BorderSide.none),enabledBorder:OutlineInputBorder(borderRadius:BorderRadius.circular(16),borderSide:BorderSide.none),focusedBorder:OutlineInputBorder(borderRadius:BorderRadius.circular(16),borderSide:const BorderSide(color:blue,width:1.2)),contentPadding:const EdgeInsets.symmetric(horizontal:15,vertical:14))),home:const Shell());}
+String money(num value) => NumberFormat.currency(
+      locale: 'en_IN',
+      symbol: '₹',
+      decimalDigits: 0,
+    ).format(value);
 
-class Shell extends StatefulWidget{const Shell({super.key});@override State<Shell> createState()=>_ShellState();}
-class _ShellState extends State<Shell>{int tab=0;static const labels=['Home','Inventory','Purchases','Sales','More'];static const icons=[Icons.home_rounded,Icons.inventory_2_rounded,Icons.shopping_bag_rounded,Icons.point_of_sale_rounded,Icons.more_horiz_rounded];@override Widget build(BuildContext c){final pages=<Widget>[Home(onInventory:()=>setState(()=>tab=1),onSales:()=>setState(()=>tab=3)),const Inventory(),const Purchases(),const Sales(),const More()];final wide=MediaQuery.sizeOf(c).width>=900;return Scaffold(body:wide?Row(children:[Container(width:225,color:Colors.white,padding:const EdgeInsets.all(14),child:Column(children:[const Brand(),const SizedBox(height:25),Expanded(child:NavigationRail(extended:true,minExtendedWidth:195,selectedIndex:tab,onDestinationSelected:(v)=>setState(()=>tab=v),destinations:[for(int i=0;i<labels.length;i++)NavigationRailDestination(icon:Icon(icons[i]),selectedIcon:Icon(icons[i]),label:Text(labels[i]))])),const Text('ElectroMart • Main Store',style:TextStyle(color:muted,fontSize:10))])),const VerticalDivider(width:1),Expanded(child:pages[tab])]):pages[tab],bottomNavigationBar:wide?null:NavigationBar(selectedIndex:tab,onDestinationSelected:(v)=>setState(()=>tab=v),destinations:[for(int i=0;i<labels.length;i++)NavigationDestination(icon:Icon(icons[i]),label:labels[i])]));}}
-class Brand extends StatelessWidget{const Brand();@override Widget build(BuildContext c)=>Row(children:[Container(width:40,height:40,decoration:BoxDecoration(gradient:const LinearGradient(colors:[blue,purple]),borderRadius:BorderRadius.circular(13)),child:const Icon(Icons.bolt_rounded,color:Colors.white)),const SizedBox(width:10),const Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text('INVENTORY',style:TextStyle(fontWeight:FontWeight.w900,letterSpacing:1)),Text('ElectroMart POS',style:TextStyle(color:muted,fontSize:10))])]);}
-class Page extends StatelessWidget{final Widget child;const Page({required this.child});@override Widget build(BuildContext c)=>SafeArea(child:Center(child:ConstrainedBox(constraints:const BoxConstraints(maxWidth:1440),child:Padding(padding:const EdgeInsets.fromLTRB(20,18,20,22),child:child))));}
-class Header extends StatelessWidget{final String title,sub;final Widget? action;const Header(this.title,this.sub,{this.action});@override Widget build(BuildContext c)=>LayoutBuilder(builder:(_,x){final h=Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(title,style:const TextStyle(fontSize:28,fontWeight:FontWeight.w900,color:ink,letterSpacing:-.8)),const SizedBox(height:3),Text(sub,style:const TextStyle(color:muted))]);if(action==null)return h;if(x.maxWidth<620)return Column(crossAxisAlignment:CrossAxisAlignment.start,children:[h,const SizedBox(height:12),action!]);return Row(children:[Expanded(child:h),action!]);});}
-class Search extends StatelessWidget{final String hint;final ValueChanged<String>? onChanged;final VoidCallback? scan;const Search({required this.hint,this.onChanged,this.scan});@override Widget build(BuildContext c)=>TextField(onChanged:onChanged,decoration:InputDecoration(prefixIcon:const Icon(Icons.search_rounded),hintText:hint,suffixIcon:scan==null?null:IconButton(onPressed:scan,icon:const Icon(Icons.qr_code_scanner_rounded))));}
-class Badge extends StatelessWidget{final String text;const Badge(this.text);@override Widget build(BuildContext c){final col=text=='IN STOCK'?green:text=='LOW STOCK'?orange:red;return Container(padding:const EdgeInsets.symmetric(horizontal:9,vertical:6),decoration:BoxDecoration(color:col.withAlpha(18),borderRadius:BorderRadius.circular(30)),child:Text(text,style:TextStyle(color:col,fontSize:9,fontWeight:FontWeight.w900)));}}
+void main() => runApp(const ModernApp());
 
-class ProductImage extends StatefulWidget{final Product p;final double size;const ProductImage({super.key,required this.p,this.size=120});@override State<ProductImage> createState()=>_ProductImageState();}
-class _ProductImageState extends State<ProductImage>{String? url;@override void initState(){super.initState();url=widget.p.imageUrl.trim().isEmpty?null:widget.p.imageUrl.trim();if(url==null)_find();}Future<void> _find()async{final u=await ProductCatalogService.findImage('${widget.p.brand} ${widget.p.name} ${widget.p.model}',brand:widget.p.brand,category:widget.p.category);if(mounted&&u!=null)setState(()=>url=u);}@override Widget build(BuildContext c){final fallback=Container(width:size,height:size,decoration:BoxDecoration(color:const Color(0xFFF1F3F8),borderRadius:BorderRadius.circular(16)),child:Icon(catIcon(widget.p.category),size:size*.32,color:ink));if(url==null)return fallback;return ClipRRect(borderRadius:BorderRadius.circular(16),child:Image.network(url!,width:size,height:size,fit:BoxFit.contain,errorBuilder:(_,__,___)=>fallback,loadingBuilder:(_,ch,p)=>p==null?ch:fallback));}}
-class ProductCard extends StatelessWidget{final Product p;final VoidCallback? tap;const ProductCard(this.p,{this.tap});@override Widget build(BuildContext c)=>Card(clipBehavior:Clip.antiAlias,child:InkWell(onTap:tap,child:Padding(padding:const EdgeInsets.all(10),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Expanded(child:ProductImage(p:p,size:180)),const SizedBox(height:8),Text(p.brand,style:const TextStyle(color:muted,fontSize:10)),Text(p.name,maxLines:2,overflow:TextOverflow.ellipsis,style:const TextStyle(fontWeight:FontWeight.w900,fontSize:14)),const SizedBox(height:4),Row(children:[Expanded(child:Text(money(p.sellingPrice),style:const TextStyle(fontWeight:FontWeight.w900,fontSize:16))),Badge(p.status)])]))));}
+class ModernApp extends StatelessWidget {
+  const ModernApp({super.key});
 
-class Home extends StatefulWidget{final VoidCallback onInventory,onSales;const Home({super.key,required this.onInventory,required this.onSales});@override State<Home> createState()=>_HomeState();}
-class _HomeState extends State<Home>{List<Product> ps=[];Map<String,num> s={};bool loading=true;@override void initState(){super.initState();load();}Future<void> load()async{try{final p=await AppDatabase.instance.products();final x=await AppDatabase.instance.snapshot();if(mounted)setState((){ps=p;s=x;loading=false;});}catch(_){if(mounted)setState(()=>loading=false);}}@override Widget build(BuildContext c){final low=ps.where((p)=>p.quantity<=p.minimumStock).take(4);return Page(child:RefreshIndicator(onRefresh:load,child:ListView(physics:const AlwaysScrollableScrollPhysics(),children:[const Text('Good morning',style:TextStyle(fontSize:30,fontWeight:FontWeight.w900,color:ink,letterSpacing:-1)),const SizedBox(height:4),const Text('Run your shop from one fast workspace.',style:TextStyle(color:muted)),const SizedBox(height:18),Row(children:[Expanded(child:Quick('New sale',Icons.point_of_sale_rounded,blue,onSales)),const SizedBox(width:10),Expanded(child:Quick('Add product',Icons.add_box_rounded,purple,onInventory))]),const SizedBox(height:24),const Text('Business snapshot',style:TextStyle(fontSize:18,fontWeight:FontWeight.w900)),const SizedBox(height:10),LayoutBuilder(builder:(_,x){final n=x.maxWidth>1000?4:x.maxWidth>600?2:1;final w=(x.maxWidth-(n-1)*12)/n;return Wrap(spacing:12,runSpacing:12,children:[SizedBox(width:w,child:Metric('Today sales',money(s['sales']??0),Icons.trending_up_rounded,green)),SizedBox(width:w,child:Metric('Purchases',money(s['purchases']??0),Icons.shopping_bag_outlined,purple)),SizedBox(width:w,child:Metric('Inventory value',money(s['inventory']??0),Icons.inventory_2_outlined,blue,note:'${ps.length} products')),SizedBox(width:w,child:Metric('Low stock','${s['low']??0}',Icons.warning_amber_rounded,orange))]);}),const SizedBox(height:24),const Text('Low stock',style:TextStyle(fontSize:18,fontWeight:FontWeight.w900)),const SizedBox(height:10),if(low.isEmpty)const Empty('Stock looks healthy','No products need attention.',Icons.check_circle_outline_rounded)else...low.map((p)=>Card(margin:const EdgeInsets.only(bottom:8),child:ListTile(leading:ProductImage(p:p,size:46),title:Text('${p.brand} · ${p.name}',maxLines:1,overflow:TextOverflow.ellipsis,style:const TextStyle(fontWeight:FontWeight.w800,fontSize:13)),subtitle:Text('${p.quantity} left • ${p.sku}'),trailing:Badge(p.status)))),const SizedBox(height:24),Row(children:[const Expanded(child:Text('Products',style:TextStyle(fontSize:18,fontWeight:FontWeight.w900))),TextButton(onPressed:onInventory,child:const Text('View inventory'))]),const SizedBox(height:8),SizedBox(height:240,child:loading?const Center(child:CircularProgressIndicator()):ps.isEmpty?const Empty('No products yet','Add your first product from Inventory.',Icons.devices_other_rounded):ListView.separated(scrollDirection:Axis.horizontal,itemCount:ps.length>8?8:ps.length,separatorBuilder:(_,__)=>const SizedBox(width:12),itemBuilder:(_,i)=>SizedBox(width:205,child:ProductCard(ps[i]))))]));}}
-class Quick extends StatelessWidget{final String text;final IconData icon;final Color color;final VoidCallback onTap;const Quick(this.text,this.icon,this.color,this.onTap);@override Widget build(BuildContext c)=>Card(child:InkWell(borderRadius:BorderRadius.circular(20),onTap:onTap,child:Padding(padding:const EdgeInsets.all(14),child:Row(children:[Container(width:40,height:40,decoration:BoxDecoration(color:color.withAlpha(18),borderRadius:BorderRadius.circular(12)),child:Icon(icon,color:color)),const SizedBox(width:10),Expanded(child:Text(text,style:const TextStyle(fontWeight:FontWeight.w900))),const Icon(Icons.arrow_forward_rounded,size:18,color:muted)]))));}
-class Metric extends StatelessWidget{final String label,value;final String? note;final IconData icon;final Color color;const Metric(this.label,this.value,this.icon,this.color,{this.note});@override Widget build(BuildContext c)=>Card(child:Padding(padding:const EdgeInsets.all(16),child:Row(children:[Container(width:42,height:42,decoration:BoxDecoration(color:color.withAlpha(18),borderRadius:BorderRadius.circular(13)),child:Icon(icon,color:color)),const SizedBox(width:12),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(label,style:const TextStyle(color:muted,fontSize:12)),Text(value,style:const TextStyle(fontSize:20,fontWeight:FontWeight.w900)),if(note!=null)Text(note!,style:const TextStyle(color:muted,fontSize:11))]))])));}
-class Empty extends StatelessWidget{final String title,sub;final IconData icon;const Empty(this.title,this.sub,this.icon);@override Widget build(BuildContext c)=>Card(child:Padding(padding:const EdgeInsets.all(22),child:Row(children:[Icon(icon,color:muted,size:40),const SizedBox(width:14),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(title,style:const TextStyle(fontWeight:FontWeight.w900)),Text(sub,style:const TextStyle(color:muted,fontSize:12))]))])));}
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: 'Inventory POS',
+      theme: ThemeData(
+        useMaterial3: true,
+        scaffoldBackgroundColor: background,
+        colorScheme: ColorScheme.fromSeed(seedColor: primary),
+        cardTheme: CardThemeData(
+          elevation: 0,
+          color: Colors.white,
+          margin: EdgeInsets.zero,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+        ),
+        navigationBarTheme: NavigationBarThemeData(
+          height: 76,
+          backgroundColor: Colors.white,
+          indicatorColor: primary.withAlpha(22),
+          labelTextStyle: const WidgetStatePropertyAll(
+            TextStyle(fontWeight: FontWeight.w800, fontSize: 12),
+          ),
+        ),
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: Colors.white,
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 15, vertical: 14),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide.none,
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: const BorderSide(color: primary, width: 1.2),
+          ),
+        ),
+      ),
+      home: const Shell(),
+    );
+  }
+}
 
-class Inventory extends StatefulWidget{const Inventory({super.key});@override State<Inventory> createState()=>_InventoryState();}
-class _InventoryState extends State<Inventory>{List<Product> ps=[];String q='';bool loading=true;@override void initState(){super.initState();load();}Future<void> load()async{try{final r=await AppDatabase.instance.products(query:q);if(mounted)setState((){ps=r;loading=false;});}catch(_){if(mounted)setState(()=>loading=false);}}@override Widget build(BuildContext c)=>Page(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Header('Inventory','${ps.length} products in your catalog',action:FilledButton.icon(onPressed:()=>add(c),icon:const Icon(Icons.add),label:const Text('Add product'))),const SizedBox(height:15),Search(hint:'Search product, brand, model, SKU or barcode',onChanged:(v){q=v;load();},scan:()=>scan(c)),const SizedBox(height:12),Expanded(child:loading?const Center(child:CircularProgressIndicator()):ps.isEmpty?const Empty('No products found','Try another search or add a product.',Icons.inventory_2_outlined):LayoutBuilder(builder:(_,x){final n=x.maxWidth>1200?4:x.maxWidth>760?3:2;return GridView.builder(itemCount:ps.length,gridDelegate:SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount:n,crossAxisSpacing:12,mainAxisSpacing:12,childAspectRatio:.76),itemBuilder:(_,i)=>ProductCard(ps[i],tap:()=>details(c,ps[i])));})),]));Future<void> scan(BuildContext c)async{final x=TextEditingController();final v=await showDialog<String>(context:c,builder:(_)=>AlertDialog(title:const Text('Find by SKU / barcode'),content:TextField(controller:x,autofocus:true),actions:[TextButton(onPressed:()=>Navigator.pop(c),child:const Text('Cancel')),FilledButton(onPressed:()=>Navigator.pop(c,x.text.trim()),child:const Text('Find'))]));x.dispose();if(v!=null&&v.isNotEmpty){q=v;load();}}Future<void> details(BuildContext c,Product p)async{await showModalBottomSheet(context:c,showDragHandle:true,builder:(_)=>SafeArea(child:Padding(padding:const EdgeInsets.all(20),child:Column(mainAxisSize:MainAxisSize.min,children:[Row(children:[ProductImage(p:p,size:70),const SizedBox(width:12),Expanded(child:Text(p.name,style:const TextStyle(fontSize:19,fontWeight:FontWeight.w900))),Badge(p.status)]),const SizedBox(height:15),Row(children:[Expanded(child:Text('Selling\n${money(p.sellingPrice)}')),Expanded(child:Text('Purchase\n${money(p.purchasePrice)}')),Expanded(child:Text('Stock\n${p.quantity}'))]),const SizedBox(height:15),Row(children:[Expanded(child:OutlinedButton.icon(onPressed:(){Navigator.pop(c);AppDatabase.instance.adjustStock(p.id,1,'ADJUSTMENT','Manual addition').then((_){load();});},icon:const Icon(Icons.add),label:const Text('Add stock'))),const SizedBox(width:10),Expanded(child:FilledButton.icon(onPressed:p.quantity==0?null:(){Navigator.pop(c);AppDatabase.instance.adjustStock(p.id,-1,'ADJUSTMENT','Manual removal').then((_){load();});},icon:const Icon(Icons.remove),label:const Text('Remove stock')))])]))));}Future<void> add(BuildContext c)async{final d=await showDialog<Draft>(context:c,builder:(_)=>const AddDialog());if(d==null)return;try{await AppDatabase.instance.addProduct(d.map);load();if(mounted)ScaffoldMessenger.of(c).showSnackBar(const SnackBar(content:Text('Product added.')));}catch(e){if(mounted)ScaffoldMessenger.of(c).showSnackBar(SnackBar(content:Text('$e')));}}}
-class Draft{final String name,brand,category,model,sku,image;final double buy,sell,mrp;final int qty,min;Draft(this.name,this.brand,this.category,this.model,this.sku,this.image,this.buy,this.sell,this.mrp,this.qty,this.min);Map<String,Object?>get map=>{'name':name,'brand':brand,'category':category,'model':model,'sku':sku,'barcode':'','image_url':image,'mrp':mrp,'selling_price':sell,'purchase_price':buy,'quantity':qty,'minimum_stock':min,'supplier':'','warranty':'1 Year','gst_rate':18,'hsn_code':'','location':'Main Store','rack':'','shelf':'','serial_tracking':0,'imei_tracking':category=='Mobile Phones'?1:0,'specs':'','notes':'','archived':0};}
-class AddDialog extends StatefulWidget{const AddDialog({super.key});@override State<AddDialog> createState()=>_AddDialogState();}
-class _AddDialogState extends State<AddDialog>{final f=GlobalKey<FormState>();final name=TextEditingController(),model=TextEditingController(),sku=TextEditingController(text:'NEW-${DateTime.now().millisecondsSinceEpoch%100000}'),buy=TextEditingController(),sell=TextEditingController(),mrp=TextEditingController(),qty=TextEditingController(text:'0'),min=TextEditingController(text:'2');String brand='Samsung',category='Mobile Phones',image='';bool searching=false;List<ProductSuggestion> suggestions=[];static const brands=['Samsung','LG','Sony','Apple','OnePlus','Motorola','Xiaomi','HP','Dell','Lenovo','ASUS','Acer','Whirlpool','IFB','Bosch','Haier','JBL','boAt','Bose','Canon','Nikon','Epson','TP-Link','Logitech','Razer','Kingston','SanDisk','Seagate','Western Digital','Philips','Oppo','Realme'];static const cats=['Mobile Phones','Laptops','Televisions','Refrigerators','Air Conditioners','Washing Machines','Audio','Cameras','Printers','Networking','Storage','Accessories','Monitors','Gaming','Smartwatches','Kitchen Appliances','Fans','Coolers','Projectors','Power & Cables'];@override void dispose(){for(final x in[name,model,sku,buy,sell,mrp,qty,min])x.dispose();super.dispose();}Future<void> search(String v)async{if(v.trim().length<2){setState(()=>suggestions=[]);return;}setState(()=>searching=true);final r=await ProductCatalogService.suggest(query:v,brand:brand,category:category);if(mounted)setState((){suggestions=r;searching=false;});}void choose(ProductSuggestion x){name.text=x.title;model.text=x.title;image=x.imageUrl;setState(()=>suggestions=[]);}@override Widget build(BuildContext c)=>AlertDialog(title:const Text('Add product',style:TextStyle(fontWeight:FontWeight.w900)),content:SizedBox(width:650,child:Form(key:f,child:SingleChildScrollView(child:Column(children:[Row(children:[Expanded(child:drop('Product type',category,cats,(v)=>setState(()=>category=v!))),const SizedBox(width:10),Expanded(child:drop('Brand',brand,brands,(v)=>setState(()=>brand=v!)))]),const SizedBox(height:10),TextFormField(controller:name,onChanged:search,validator:(v)=>v==null||v.trim().isEmpty?'Enter a model':null,decoration:const InputDecoration(labelText:'Product / model name',hintText:'e.g. Galaxy S25 Ultra',prefixIcon:Icon(Icons.auto_awesome_rounded))),if(searching)const LinearProgressIndicator(minHeight:2),if(suggestions.isNotEmpty)Card(color:const Color(0xFFF8F9FD),child:Column(children:[const ListTile(title:Text('Relevant product suggestions',style:TextStyle(fontWeight:FontWeight.w900)),subtitle:Text('Brand + category filtered.')),for(final x in suggestions.take(5))ListTile(onTap:()=>choose(x),leading:SizedBox(width:50,height:50,child:x.imageUrl.isEmpty?const Icon(Icons.devices_other):Image.network(x.imageUrl,fit:BoxFit.contain,errorBuilder:(_,__,___)=>const Icon(Icons.devices_other))),title:Text(x.title,maxLines:1,overflow:TextOverflow.ellipsis,style:const TextStyle(fontWeight:FontWeight.w800)),subtitle:Text(x.description,maxLines:2,overflow:TextOverflow.ellipsis),trailing:const Icon(Icons.add_circle,color:blue))])),Row(children:[Expanded(child:field(model,'Model / variant')),const SizedBox(width:10),Expanded(child:field(sku,'SKU'))]),if(image.isNotEmpty)Padding(padding:const EdgeInsets.only(bottom:8),child:Container(height:130,width:double.infinity,color:bg,child:Image.network(image,fit:BoxFit.contain))),Row(children:[Expanded(child:field(buy,'Purchase price',numField:true)),const SizedBox(width:10),Expanded(child:field(sell,'Selling price',numField:true))]),Row(children:[Expanded(child:field(mrp,'MRP',numField:true)),const SizedBox(width:8),Expanded(child:field(qty,'Opening stock',numField:true)),const SizedBox(width:8),Expanded(child:field(min,'Min. stock',numField:true))])])))),actions:[TextButton(onPressed:()=>Navigator.pop(c),child:const Text('Cancel')),FilledButton(onPressed:(){if(!f.currentState!.validate())return;Navigator.pop(c,Draft(name.text.trim(),brand,category,model.text.trim(),sku.text.trim(),image,double.tryParse(buy.text)??0,double.tryParse(sell.text)??0,double.tryParse(mrp.text)??0,int.tryParse(qty.text)??0,int.tryParse(min.text)??2));},child:const Text('Save product'))]);Widget drop(String l,String v,List<String> a,ValueChanged<String?> fn)=>DropdownButtonFormField<String>(initialValue:v,isExpanded:true,decoration:InputDecoration(labelText:l),items:[for(final x in a)DropdownMenuItem(value:x,child:Text(x,overflow:TextOverflow.ellipsis))],onChanged:fn);Widget field(TextEditingController c,String l,{bool numField=false})=>Padding(padding:const EdgeInsets.only(bottom:8),child:TextFormField(controller:c,keyboardType:numField?const TextInputType.numberWithOptions(decimal:true):null,validator:(v)=>v==null||v.trim().isEmpty?'Required':null,decoration:InputDecoration(labelText:l)));}
+class Shell extends StatefulWidget {
+  const Shell({super.key});
 
-class Sales extends StatefulWidget{const Sales({super.key});@override State<Sales> createState()=>_SalesState();}
-class _SalesState extends State<Sales>{List<Product> ps=[];String q='';final Map<int,int> cart={};bool loading=true;@override void initState(){super.initState();load();}Future<void> load()async{try{final r=await AppDatabase.instance.products(query:q);if(mounted)setState((){ps=r;loading=false;});}catch(_){if(mounted)setState(()=>loading=false);}}Product? p(int id)=>ps.where((x)=>x.id==id).firstOrNull;int count(Product x)=>cart[x.id!]??0;double get total=>cart.entries.fold(0,(s,e){final x=p(e.key);return s+(x==null?0:x.sellingPrice*e.value);});void add(Product x){if(x.id==null||x.quantity==0)return;final n=count(x);if(n>=x.quantity){toast('Only ${x.quantity} available');return;}setState(()=>cart[x.id!]=n+1);}void minus(Product x){final n=count(x);if(n<=1)setState(()=>cart.remove(x.id));else setState(()=>cart[x.id!]=n-1);}void toast(String t){if(mounted)ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(t)));}@override Widget build(BuildContext c){final wide=MediaQuery.sizeOf(c).width>=980;return Page(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[const Header('New sale','Find product → cart → payment → invoice'),const SizedBox(height:15),Search(hint:'Search product, brand, model or SKU',onChanged:(v){q=v;load();},scan:()=>scan(c)),const SizedBox(height:12),Expanded(child:wide?Row(children:[Expanded(child:grid()),const SizedBox(width:14),SizedBox(width:350,child:cartPanel())]):Column(children:[Expanded(child:grid()),const SizedBox(height:9),SizedBox(height:52,width:MediaQuery.sizeOf(c).width>450?290:double.infinity,child:FilledButton.icon(onPressed:cart.isEmpty?null:()=>showModalBottomSheet(context:c,isScrollControlled:true,showDragHandle:true,builder:(_)=>SizedBox(height:MediaQuery.sizeOf(c).height*.72,child:Padding(padding:const EdgeInsets.all(15),child:cartPanel()))),icon:const Icon(Icons.shopping_bag_rounded),label:Text(cart.isEmpty?'Cart · ₹0':'View cart · ${money(total)}'))))]))]));}Widget grid()=>loading?const Center(child:CircularProgressIndicator()):ps.isEmpty?const Empty('No sellable products','Add products with stock to start.',Icons.point_of_sale_rounded):LayoutBuilder(builder:(_,x){final n=x.maxWidth>1150?4:x.maxWidth>720?3:2;return GridView.builder(itemCount:ps.length,gridDelegate:SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount:n,crossAxisSpacing:12,mainAxisSpacing:12,childAspectRatio:.72),itemBuilder:(_,i){final x=ps[i],n=count(x);return Card(child:Padding(padding:const EdgeInsets.all(9),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Expanded(child:ProductImage(p:x,size:170)),Text(x.brand,style:const TextStyle(color:muted,fontSize:10)),Text(x.name,maxLines:2,overflow:TextOverflow.ellipsis,style:const TextStyle(fontWeight:FontWeight.w900)),Row(children:[Expanded(child:Text(money(x.sellingPrice),style:const TextStyle(fontWeight:FontWeight.w900))),if(x.quantity==0)const Badge('OUT OF STOCK')else n==0?IconButton(onPressed:()=>add(x),icon:const Icon(Icons.add_circle,color:blue,size:34)):Row(children:[IconButton(onPressed:()=>minus(x),icon:const Icon(Icons.remove_circle_outline)),Text('$n',style:const TextStyle(fontWeight:FontWeight.w900)),IconButton(onPressed:()=>add(x),icon:const Icon(Icons.add_circle,color:blue))])]))));});}Widget cartPanel()=>Card(child:Padding(padding:const EdgeInsets.all(15),child:Column(children:[Row(children:[const Expanded(child:Text('Current order',style:TextStyle(fontSize:18,fontWeight:FontWeight.w900))),if(cart.isNotEmpty)Text('${cart.values.fold(0,(a,b)=>a+b)} items',style:const TextStyle(color:muted))]),const SizedBox(height:8),Expanded(child:cart.isEmpty?const Empty('Cart is empty','Tap + to add a product.',Icons.shopping_bag_outlined):ListView.separated(itemCount:cart.length,separatorBuilder:(_,__)=>const Divider(height:1),itemBuilder:(_,i){final x=p(cart.keys.elementAt(i))!;return ListTile(contentPadding:EdgeInsets.zero,leading:ProductImage(p:x,size:45),title:Text(x.name,maxLines:1,overflow:TextOverflow.ellipsis),subtitle:Text('${money(x.sellingPrice)} each'),trailing:Row(mainAxisSize:MainAxisSize.min,children:[IconButton(onPressed:()=>minus(x),icon:const Icon(Icons.remove_circle_outline)),Text('${count(x)}'),IconButton(onPressed:()=>add(x),icon:const Icon(Icons.add_circle,color:blue))]);})),const Divider(),Row(children:[const Expanded(child:Text('Total',style:TextStyle(color:muted))),Text(money(total),style:const TextStyle(fontSize:21,fontWeight:FontWeight.w900))]),const SizedBox(height:8),Row(children:[Expanded(child:OutlinedButton(onPressed:cart.isEmpty?null:()=>setState(cart.clear),child:const Text('Clear cart'))),const SizedBox(width:8),Expanded(child:FilledButton(onPressed:cart.isEmpty?null:()=>checkout(c),child:const Text('Checkout')))])])));
-Future<void> checkout(BuildContext c)async{final customer=TextEditingController(text:'Walk-in Customer');String payment='Cash';final ok=await showDialog<bool>(context:c,builder:(_)=>StatefulBuilder(builder:(c,set)=>AlertDialog(title:const Text('Checkout',style:TextStyle(fontWeight:FontWeight.w900)),content:Column(mainAxisSize:MainAxisSize.min,children:[Text(money(total),style:const TextStyle(fontSize:24,fontWeight:FontWeight.w900)),TextField(controller:customer,decoration:const InputDecoration(labelText:'Customer')),DropdownButtonFormField<String>(initialValue:payment,decoration:const InputDecoration(labelText:'Payment method'),items:const[DropdownMenuItem(value:'Cash',child:Text('Cash')),DropdownMenuItem(value:'UPI',child:Text('UPI')),DropdownMenuItem(value:'Card',child:Text('Card')),DropdownMenuItem(value:'Bank transfer',child:Text('Bank transfer')),DropdownMenuItem(value:'Credit / Due',child:Text('Credit / Due'))],onChanged:(v)=>set(()=>payment=v!))]),actions:[TextButton(onPressed:()=>Navigator.pop(c,false),child:const Text('Cancel')),FilledButton(onPressed:()=>Navigator.pop(c,true),child:const Text('Complete sale'))])));if(ok!=true){customer.dispose();return;}try{final items=<Map<String,Object?>>[];for(final e in cart.entries){final x=p(e.key);if(x!=null)items.add({'product_id':x.id!,'quantity':e.value,'price':x.sellingPrice,'name':x.name});}await AppDatabase.instance.sellCart(items,customer:customer.text.trim().isEmpty?'Walk-in Customer':customer.text.trim(),payment:payment);if(mounted)setState(cart.clear);await load();if(c.mounted)await showDialog(context:c,builder:(_)=>AlertDialog(title:const Text('✓ Sale completed'),content:Text('Total ${money(total)}\nPaid via $payment\nInventory updated.'),actions:[FilledButton(onPressed:()=>Navigator.pop(c),child:const Text('New sale'))]));}catch(e){toast('$e');}customer.dispose();}Future<void>scan(BuildContext c)async{final x=TextEditingController();final v=await showDialog<String>(context:c,builder:(_)=>AlertDialog(title:const Text('Find by barcode / SKU'),content:TextField(controller:x,autofocus:true),actions:[TextButton(onPressed:()=>Navigator.pop(c),child:const Text('Cancel')),FilledButton(onPressed:()=>Navigator.pop(c,x.text.trim()),child:const Text('Find'))]));x.dispose();if(v!=null&&v.isNotEmpty){q=v;load();}}}
+  @override
+  State<Shell> createState() => _ShellState();
+}
 
-class Purchases extends StatefulWidget{const Purchases({super.key});@override State<Purchases> createState()=>_PurchasesState();}
-class _PurchasesState extends State<Purchases>{List<Map<String,Object?>> rows=[];@override void initState(){super.initState();load();}Future<void>load()async{final r=await AppDatabase.instance.purchases();if(mounted)setState(()=>rows=r);}@override Widget build(BuildContext c)=>Page(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Header('Purchases','Receive stock and manage supplier invoices',action:FilledButton.icon(onPressed:()=>newPurchase(c),icon:const Icon(Icons.add),label:const Text('New purchase'))),const SizedBox(height:15),Expanded(child:rows.isEmpty?const Empty('No purchases yet','Receive your first supplier order.',Icons.shopping_bag_outlined):ListView.separated(itemCount:rows.length,separatorBuilder:(_,__)=>const SizedBox(height:8),itemBuilder:(_,i){final r=rows[i];return Card(child:ListTile(title:Text(r['invoice']?.toString()??'Purchase',style:const TextStyle(fontWeight:FontWeight.w900)),subtitle:Text('${r['supplier']??'Supplier'} • ${r['date']??''}'),trailing:Text(money((r['total']as num?)??0),style:const TextStyle(fontWeight:FontWeight.w900)));}))]));}Future<void>newPurchase(BuildContext c)async{final ps=await AppDatabase.instance.products();if(ps.isEmpty)return;Product selected=ps.first;final supplier=TextEditingController(),qty=TextEditingController(text:'1'),price=TextEditingController();final ok=await showDialog<bool>(context:c,builder:(_)=>StatefulBuilder(builder:(c,set)=>AlertDialog(title:const Text('New purchase'),content:Column(mainAxisSize:MainAxisSize.min,children:[TextField(controller:supplier,decoration:const InputDecoration(labelText:'Supplier')),DropdownButtonFormField<Product>(initialValue:selected,isExpanded:true,decoration:const InputDecoration(labelText:'Product'),items:[for(final p in ps)DropdownMenuItem(value:p,child:Text('${p.brand} ${p.name}',overflow:TextOverflow.ellipsis))],onChanged:(v)=>set(()=>selected=v!)),TextField(controller:qty,keyboardType:TextInputType.number,decoration:const InputDecoration(labelText:'Quantity')),TextField(controller:price,keyboardType:const TextInputType.numberWithOptions(decimal:true),decoration:const InputDecoration(labelText:'Cost per unit'))]),actions:[TextButton(onPressed:()=>Navigator.pop(c,false),child:const Text('Cancel')),FilledButton(onPressed:()=>Navigator.pop(c,true),child:const Text('Receive stock'))])));if(ok==true){final q=int.tryParse(qty.text)??0;final cost=double.tryParse(price.text)??selected.purchasePrice;await AppDatabase.instance.purchase(supplier:supplier.text.trim().isEmpty?'Supplier':supplier.text.trim(),invoice:'PO-${DateTime.now().millisecondsSinceEpoch%100000}',items:[{'product_id':selected.id!,'quantity':q,'price':cost}],payment:'Cash',paid:cost*q);load();}supplier.dispose();qty.dispose();price.dispose();}}
+class _ShellState extends State<Shell> {
+  int selected = 0;
 
-class More extends StatelessWidget{const More({super.key});@override Widget build(BuildContext c)=>Page(child:ListView(children:[const Header('More','Customers, suppliers, expenses, reports and settings.'),const SizedBox(height:16),Tool('Customers','Customer profiles and balances',Icons.people_alt_outlined,blue,()=>list(c,'Customers','customers',Icons.people_alt_outlined)),Tool('Suppliers','Supplier records and purchase history',Icons.local_shipping_outlined,purple,()=>list(c,'Suppliers','suppliers',Icons.local_shipping_outlined)),Tool('Expenses','Track shop operating costs',Icons.receipt_long_outlined,orange,()=>expense(c)),Tool('Reports & analytics','Sales, profit, expenses and stock',Icons.bar_chart_rounded,green,()=>report(c)),Tool('Backup & Restore','Inspect local shop data',Icons.backup_rounded,const Color(0xFF3D7DD8),()=>backup(c)),Tool('Settings','Shop profile and preferences',Icons.settings_outlined,muted,()=>settings(c))]));}}
-class Tool extends StatelessWidget{final String title,sub;final IconData icon;final Color color;final VoidCallback tap;const Tool(this.title,this.sub,this.icon,this.color,this.tap);@override Widget build(BuildContext c)=>Card(margin:const EdgeInsets.only(bottom:9),child:ListTile(onTap:tap,leading:Container(width:44,height:44,decoration:BoxDecoration(color:color.withAlpha(17),borderRadius:BorderRadius.circular(13)),child:Icon(icon,color:color)),title:Text(title,style:const TextStyle(fontWeight:FontWeight.w800)),subtitle:Text(sub,style:const TextStyle(color:muted,fontSize:11)),trailing:const Icon(Icons.chevron_right_rounded,color:muted)));}
-Future<void>list(BuildContext c,String title,String table,IconData icon)async{final rows=await AppDatabase.instance.db.then((d)=>d.query(table,limit:100));if(!c.mounted)return;await Navigator.push(c,MaterialPageRoute(builder:(_)=>SimpleList(title,icon,rows)));}
-class SimpleList extends StatelessWidget{final String title;final IconData icon;final List<Map<String,Object?>> rows;const SimpleList(this.title,this.icon,this.rows);@override Widget build(BuildContext c)=>Scaffold(backgroundColor:bg,appBar:AppBar(backgroundColor:bg,title:Text(title,style:const TextStyle(fontWeight:FontWeight.w900))),body:ListView.builder(padding:const EdgeInsets.all(16),itemCount:rows.length,itemBuilder:(_,i){final r=rows[i];final vals=r.values.where((v)=>v!=null&&v.toString().isNotEmpty).take(4).map((v)=>v.toString()).toList();return Card(margin:const EdgeInsets.only(bottom:8),child:ListTile(leading:CircleAvatar(backgroundColor:blue.withAlpha(18),child:Icon(icon,color:blue)),title:Text(vals.isEmpty?'Record':vals.first,style:const TextStyle(fontWeight:FontWeight.w800)),subtitle:Text(vals.skip(1).join(' • ')));}));}
-Future<void>expense(BuildContext c)async{final cat=TextEditingController(text:'Other'),amt=TextEditingController(),note=TextEditingController();final ok=await showDialog<bool>(context:c,builder:(_)=>AlertDialog(title:const Text('Add expense'),content:Column(mainAxisSize:MainAxisSize.min,children:[TextField(controller:cat,decoration:const InputDecoration(labelText:'Category')),TextField(controller:amt,keyboardType:const TextInputType.numberWithOptions(decimal:true),decoration:const InputDecoration(labelText:'Amount')),TextField(controller:note,decoration:const InputDecoration(labelText:'Notes'))]),actions:[TextButton(onPressed:()=>Navigator.pop(c,false),child:const Text('Cancel')),FilledButton(onPressed:()=>Navigator.pop(c,true),child:const Text('Save'))]));if(ok==true)await AppDatabase.instance.addExpense(cat.text,double.tryParse(amt.text)??0,'Cash',note.text);cat.dispose();amt.dispose();note.dispose();}
-Future<void>report(BuildContext c)async{final m=await AppDatabase.instance.monthly();if(!c.mounted)return;showModalBottomSheet(context:c,showDragHandle:true,builder:(_)=>Padding(padding:const EdgeInsets.all(20),child:Column(mainAxisSize:MainAxisSize.min,crossAxisAlignment:CrossAxisAlignment.start,children:[const Text('This month',style:TextStyle(fontSize:22,fontWeight:FontWeight.w900)),for(final e in {'Sales':m['sales'],'COGS':m['cogs'],'Gross profit':m['gross'],'Expenses':m['expenses'],'Net profit':m['net'],'Inventory':m['inventory']}.entries)Padding(padding:const EdgeInsets.symmetric(vertical:6),child:Row(children:[Expanded(child:Text(e.key,style:const TextStyle(color:muted))),Text(money(e.value??0),style:const TextStyle(fontWeight:FontWeight.w900))]))])));}
-Future<void>backup(BuildContext c)async{final d=await AppDatabase.instance.db;final n=Sqflite.firstIntValue(await d.rawQuery('SELECT COUNT(*) FROM products'))??0;if(!c.mounted)return;showDialog(context:c,builder:(_)=>AlertDialog(title:const Text('Backup & Restore'),content:Text('$n products are stored locally. The live database is healthy and ready for a future export.'),actions:[FilledButton(onPressed:()=>Navigator.pop(c),child:const Text('Close'))]));}
-Future<void>settings(BuildContext c)async{final d=await AppDatabase.instance.db;final rows=await d.query('settings',where:'key=?',whereArgs:['shop_name'],limit:1);final x=TextEditingController(text:rows.isEmpty?'ElectroMart':rows.first['value']?.toString());if(!c.mounted)return;showDialog(context:c,builder:(_)=>AlertDialog(title:const Text('Settings'),content:TextField(controller:x,decoration:const InputDecoration(labelText:'Shop name')),actions:[TextButton(onPressed:()=>Navigator.pop(c),child:const Text('Cancel')),FilledButton(onPressed:()async{await d.insert('settings',{'key':'shop_name','value':x.text.trim()},conflictAlgorithm:ConflictAlgorithm.replace);if(c.mounted)Navigator.pop(c);},child:const Text('Save'))]));}
-IconData catIcon(String x){switch(x){case'Mobile Phones':return Icons.phone_android_rounded;case'Laptops':return Icons.laptop_mac_rounded;case'Televisions':return Icons.tv_rounded;case'Refrigerators':return Icons.kitchen_rounded;case'Audio':return Icons.headphones_rounded;case'Cameras':return Icons.photo_camera_rounded;case'Printers':return Icons.print_rounded;case'Storage':return Icons.storage_rounded;default:return Icons.devices_other_rounded;}}
+  static const labels = ['Home', 'Inventory', 'Purchases', 'Sales', 'More'];
+  static const icons = [
+    Icons.home_rounded,
+    Icons.inventory_2_rounded,
+    Icons.shopping_bag_rounded,
+    Icons.point_of_sale_rounded,
+    Icons.more_horiz_rounded,
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final pages = <Widget>[
+      HomePage(
+        onInventory: () => setState(() => selected = 1),
+        onSales: () => setState(() => selected = 3),
+      ),
+      const InventoryPage(),
+      const PurchasesPage(),
+      const SalesPage(),
+      const MorePage(),
+    ];
+    final wide = MediaQuery.sizeOf(context).width >= 900;
+
+    return Scaffold(
+      body: wide
+          ? Row(
+              children: [
+                Container(
+                  width: 225,
+                  color: Colors.white,
+                  padding: const EdgeInsets.fromLTRB(14, 22, 14, 14),
+                  child: Column(
+                    children: [
+                      const Brand(),
+                      const SizedBox(height: 24),
+                      Expanded(
+                        child: NavigationRail(
+                          extended: true,
+                          minExtendedWidth: 195,
+                          selectedIndex: selected,
+                          onDestinationSelected: (value) =>
+                              setState(() => selected = value),
+                          destinations: [
+                            for (var i = 0; i < labels.length; i++)
+                              NavigationRailDestination(
+                                icon: Icon(icons[i]),
+                                selectedIcon: Icon(icons[i]),
+                                label: Text(labels[i]),
+                              ),
+                          ],
+                        ),
+                      ),
+                      const Text(
+                        'ElectroMart • Main Store',
+                        style: TextStyle(color: muted, fontSize: 10),
+                      ),
+                    ],
+                  ),
+                ),
+                const VerticalDivider(width: 1),
+                Expanded(child: pages[selected]),
+              ],
+            )
+          : pages[selected],
+      bottomNavigationBar: wide
+          ? null
+          : NavigationBar(
+              selectedIndex: selected,
+              onDestinationSelected: (value) =>
+                  setState(() => selected = value),
+              destinations: [
+                for (var i = 0; i < labels.length; i++)
+                  NavigationDestination(
+                    icon: Icon(icons[i]),
+                    label: labels[i],
+                  ),
+              ],
+            ),
+    );
+  }
+}
+
+class Brand extends StatelessWidget {
+  const Brand({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(colors: [primary, purple]),
+            borderRadius: BorderRadius.circular(13),
+          ),
+          child: const Icon(Icons.bolt_rounded, color: Colors.white),
+        ),
+        const SizedBox(width: 10),
+        const Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('INVENTORY',
+                style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1)),
+            Text('ElectroMart POS',
+                style: TextStyle(color: muted, fontSize: 10)),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class PageFrame extends StatelessWidget {
+  final Widget child;
+  const PageFrame({super.key, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1440),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 18, 20, 22),
+            child: child,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class PageHeader extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final Widget? action;
+
+  const PageHeader({
+    super.key,
+    required this.title,
+    required this.subtitle,
+    this.action,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final heading = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(title,
+            style: const TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.w900,
+                color: ink,
+                letterSpacing: -.8)),
+        const SizedBox(height: 3),
+        Text(subtitle, style: const TextStyle(color: muted)),
+      ],
+    );
+
+    if (action == null) return heading;
+    return LayoutBuilder(
+      builder: (_, constraints) {
+        if (constraints.maxWidth < 620) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [heading, const SizedBox(height: 12), action!],
+          );
+        }
+        return Row(children: [Expanded(child: heading), action!]);
+      },
+    );
+  }
+}
+
+class SearchField extends StatelessWidget {
+  final String hint;
+  final ValueChanged<String>? onChanged;
+  final VoidCallback? onScan;
+
+  const SearchField({
+    super.key,
+    required this.hint,
+    this.onChanged,
+    this.onScan,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      onChanged: onChanged,
+      decoration: InputDecoration(
+        prefixIcon: const Icon(Icons.search_rounded),
+        hintText: hint,
+        suffixIcon: onScan == null
+            ? null
+            : IconButton(
+                tooltip: 'Barcode / SKU',
+                onPressed: onScan,
+                icon: const Icon(Icons.qr_code_scanner_rounded),
+              ),
+      ),
+    );
+  }
+}
+
+class StatusBadge extends StatelessWidget {
+  final String status;
+  const StatusBadge(this.status, {super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final color = status == 'IN STOCK'
+        ? green
+        : status == 'LOW STOCK'
+            ? orange
+            : red;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withAlpha(18),
+        borderRadius: BorderRadius.circular(30),
+      ),
+      child: Text(
+        status,
+        style: TextStyle(color: color, fontSize: 9, fontWeight: FontWeight.w900),
+      ),
+    );
+  }
+}
+
+class ProductImage extends StatefulWidget {
+  final Product product;
+  final double size;
+
+  const ProductImage({
+    super.key,
+    required this.product,
+    this.size = 120,
+  });
+
+  @override
+  State<ProductImage> createState() => _ProductImageState();
+}
+
+class _ProductImageState extends State<ProductImage> {
+  String? url;
+
+  @override
+  void initState() {
+    super.initState();
+    url = widget.product.imageUrl.trim().isEmpty
+        ? null
+        : widget.product.imageUrl.trim();
+    if (url == null) _findImage();
+  }
+
+  Future<void> _findImage() async {
+    final found = await ProductCatalogService.findImage(
+      '${widget.product.brand} ${widget.product.name} ${widget.product.model}',
+      brand: widget.product.brand,
+      category: widget.product.category,
+    );
+    if (mounted && found != null && found.isNotEmpty) {
+      setState(() => url = found);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final fallback = Container(
+      width: widget.size,
+      height: widget.size,
+      decoration: BoxDecoration(
+        color: const Color(0xFFF1F3F8),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Icon(
+        categoryIcon(widget.product.category),
+        size: widget.size * .32,
+        color: ink,
+      ),
+    );
+
+    if (url == null) return fallback;
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: Image.network(
+        url!,
+        width: widget.size,
+        height: widget.size,
+        fit: BoxFit.contain,
+        errorBuilder: (_, __, ___) => fallback,
+        loadingBuilder: (_, child, progress) =>
+            progress == null ? child : fallback,
+      ),
+    );
+  }
+}
+
+class ProductCard extends StatelessWidget {
+  final Product product;
+  final VoidCallback? onTap;
+
+  const ProductCard(this.product, {super.key, this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(10),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: ProductImage(product: product, size: 180)),
+              const SizedBox(height: 8),
+              Text(product.brand,
+                  style: const TextStyle(color: muted, fontSize: 10)),
+              Text(
+                product.name,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style:
+                    const TextStyle(fontWeight: FontWeight.w900, fontSize: 14),
+              ),
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(money(product.sellingPrice),
+                        style: const TextStyle(
+                            fontWeight: FontWeight.w900, fontSize: 16)),
+                  ),
+                  StatusBadge(product.status),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class HomePage extends StatefulWidget {
+  final VoidCallback onInventory;
+  final VoidCallback onSales;
+
+  const HomePage({
+    super.key,
+    required this.onInventory,
+    required this.onSales,
+  });
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  List<Product> products = [];
+  Map<String, num> stats = {};
+  bool loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    load();
+  }
+
+  Future<void> load() async {
+    try {
+      final p = await AppDatabase.instance.products();
+      final s = await AppDatabase.instance.snapshot();
+      if (mounted) {
+        setState(() {
+          products = p;
+          stats = s;
+          loading = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => loading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final low = products.where((p) => p.quantity <= p.minimumStock).take(4);
+    return PageFrame(
+      child: RefreshIndicator(
+        onRefresh: load,
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          children: [
+            const Text('Good morning',
+                style: TextStyle(
+                    fontSize: 30,
+                    fontWeight: FontWeight.w900,
+                    color: ink,
+                    letterSpacing: -1)),
+            const SizedBox(height: 4),
+            const Text('Run your shop from one fast workspace.',
+                style: TextStyle(color: muted)),
+            const SizedBox(height: 18),
+            Row(
+              children: [
+                Expanded(
+                    child: QuickAction(
+                        'New sale', Icons.point_of_sale_rounded, primary,
+                        widget.onSales)),
+                const SizedBox(width: 10),
+                Expanded(
+                    child: QuickAction(
+                        'Add product', Icons.add_box_rounded, purple,
+                        widget.onInventory)),
+              ],
+            ),
+            const SizedBox(height: 24),
+            const Text('Business snapshot',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
+            const SizedBox(height: 10),
+            LayoutBuilder(builder: (_, constraints) {
+              final columns = constraints.maxWidth > 1000
+                  ? 4
+                  : constraints.maxWidth > 600
+                      ? 2
+                      : 1;
+              final width =
+                  (constraints.maxWidth - (columns - 1) * 12) / columns;
+              return Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: [
+                  SizedBox(
+                      width: width,
+                      child: MetricCard('Today sales',
+                          money(stats['sales'] ?? 0), Icons.trending_up, green)),
+                  SizedBox(
+                      width: width,
+                      child: MetricCard('Purchases',
+                          money(stats['purchases'] ?? 0), Icons.shopping_bag,
+                          purple)),
+                  SizedBox(
+                      width: width,
+                      child: MetricCard(
+                          'Inventory value',
+                          money(stats['inventory'] ?? 0),
+                          Icons.inventory_2,
+                          primary,
+                          note: '${products.length} products')),
+                  SizedBox(
+                      width: width,
+                      child: MetricCard('Low stock', '${stats['low'] ?? 0}',
+                          Icons.warning_amber_rounded, orange)),
+                ],
+              );
+            }),
+            const SizedBox(height: 24),
+            const Text('Low stock',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
+            const SizedBox(height: 10),
+            if (low.isEmpty)
+              const EmptyCard('Stock looks healthy',
+                  'No products need attention.', Icons.check_circle_outline)
+            else
+              ...low.map((p) => Card(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    child: ListTile(
+                      leading: ProductImage(product: p, size: 46),
+                      title: Text('${p.brand} · ${p.name}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                              fontWeight: FontWeight.w800, fontSize: 13)),
+                      subtitle: Text('${p.quantity} left • ${p.sku}'),
+                      trailing: StatusBadge(p.status),
+                    ),
+                  )),
+            const SizedBox(height: 24),
+            Row(children: [
+              const Expanded(
+                  child: Text('Products',
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.w900))),
+              TextButton(onPressed: widget.onInventory, child: const Text('View inventory')),
+            ]),
+            const SizedBox(height: 8),
+            SizedBox(
+              height: 240,
+              child: loading
+                  ? const Center(child: CircularProgressIndicator())
+                  : products.isEmpty
+                      ? const EmptyCard('No products yet',
+                          'Add your first product from Inventory.', Icons.devices)
+                      : ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: products.length > 8 ? 8 : products.length,
+                          separatorBuilder: (_, __) => const SizedBox(width: 12),
+                          itemBuilder: (_, i) => SizedBox(
+                              width: 205, child: ProductCard(products[i]))),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class QuickAction extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final Color color;
+  final VoidCallback onTap;
+
+  const QuickAction(this.label, this.icon, this.color, this.onTap,
+      {super.key});
+
+  @override
+  Widget build(BuildContext context) => Card(
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Row(children: [
+              Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                      color: color.withAlpha(18),
+                      borderRadius: BorderRadius.circular(12)),
+                  child: Icon(icon, color: color)),
+              const SizedBox(width: 10),
+              Expanded(
+                  child: Text(label,
+                      style: const TextStyle(fontWeight: FontWeight.w900))),
+              const Icon(Icons.arrow_forward_rounded, size: 18, color: muted),
+            ]),
+          ),
+        ),
+      );
+}
+
+class MetricCard extends StatelessWidget {
+  final String label, value;
+  final IconData icon;
+  final Color color;
+  final String? note;
+
+  const MetricCard(this.label, this.value, this.icon, this.color,
+      {super.key, this.note});
+
+  @override
+  Widget build(BuildContext context) => Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(children: [
+            Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                    color: color.withAlpha(18),
+                    borderRadius: BorderRadius.circular(13)),
+                child: Icon(icon, color: color)),
+            const SizedBox(width: 12),
+            Expanded(
+                child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                  Text(label,
+                      style: const TextStyle(color: muted, fontSize: 12)),
+                  Text(value,
+                      style: const TextStyle(
+                          fontSize: 20, fontWeight: FontWeight.w900)),
+                  if (note != null)
+                    Text(note!,
+                        style: const TextStyle(color: muted, fontSize: 11)),
+                ])),
+          ]),
+        ),
+      );
+}
+
+class EmptyCard extends StatelessWidget {
+  final String title, subtitle;
+  final IconData icon;
+  const EmptyCard(this.title, this.subtitle, this.icon, {super.key});
+
+  @override
+  Widget build(BuildContext context) => Card(
+        child: Padding(
+          padding: const EdgeInsets.all(22),
+          child: Row(children: [
+            Icon(icon, color: muted, size: 40),
+            const SizedBox(width: 14),
+            Expanded(
+                child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                  Text(title,
+                      style: const TextStyle(fontWeight: FontWeight.w900)),
+                  Text(subtitle,
+                      style: const TextStyle(color: muted, fontSize: 12)),
+                ])),
+          ]),
+        ),
+      );
+}
+
+class InventoryPage extends StatefulWidget {
+  const InventoryPage({super.key});
+  @override
+  State<InventoryPage> createState() => _InventoryPageState();
+}
+
+class _InventoryPageState extends State<InventoryPage> {
+  List<Product> products = [];
+  String query = '';
+  bool loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    load();
+  }
+
+  Future<void> load() async {
+    try {
+      final result = await AppDatabase.instance.products(query: query);
+      if (mounted) {
+        setState(() {
+          products = result;
+          loading = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => loading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => PageFrame(
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          PageHeader(
+            title: 'Inventory',
+            subtitle: '${products.length} products in your catalog',
+            action: FilledButton.icon(
+                onPressed: () => addProduct(context),
+                icon: const Icon(Icons.add),
+                label: const Text('Add product')),
+          ),
+          const SizedBox(height: 15),
+          SearchField(
+              hint: 'Search product, brand, model, SKU or barcode',
+              onChanged: (value) {
+                query = value;
+                load();
+              },
+              onScan: () => scan(context)),
+          const SizedBox(height: 12),
+          Expanded(
+            child: loading
+                ? const Center(child: CircularProgressIndicator())
+                : products.isEmpty
+                    ? const EmptyCard('No products found',
+                        'Try another search or add a product.', Icons.inventory_2)
+                    : LayoutBuilder(builder: (_, constraints) {
+                        final columns = constraints.maxWidth > 1200
+                            ? 4
+                            : constraints.maxWidth > 760
+                                ? 3
+                                : 2;
+                        return GridView.builder(
+                          itemCount: products.length,
+                          gridDelegate:
+                              SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: columns,
+                            crossAxisSpacing: 12,
+                            mainAxisSpacing: 12,
+                            childAspectRatio: .76,
+                          ),
+                          itemBuilder: (_, i) => ProductCard(
+                            products[i],
+                            onTap: () => details(context, products[i]),
+                          ),
+                        );
+                      }),
+          ),
+        ]),
+      );
+
+  Future<void> scan(BuildContext context) async {
+    final controller = TextEditingController();
+    final value = await showDialog<String>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Find by SKU / barcode'),
+        content: TextField(controller: controller, autofocus: true),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          FilledButton(onPressed: () => Navigator.pop(context, controller.text.trim()), child: const Text('Find')),
+        ],
+      ),
+    );
+    controller.dispose();
+    if (value != null && value.isNotEmpty) {
+      query = value;
+      load();
+    }
+  }
+
+  Future<void> details(BuildContext context, Product product) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (_) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            Row(children: [
+              ProductImage(product: product, size: 70),
+              const SizedBox(width: 12),
+              Expanded(child: Text(product.name, style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w900))),
+              StatusBadge(product.status),
+            ]),
+            const SizedBox(height: 15),
+            Row(children: [
+              Expanded(child: Text('Selling\n${money(product.sellingPrice)}')),
+              Expanded(child: Text('Purchase\n${money(product.purchasePrice)}')),
+              Expanded(child: Text('Stock\n${product.quantity}')),
+            ]),
+            const SizedBox(height: 15),
+            Row(children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () async {
+                    Navigator.pop(context);
+                    await AppDatabase.instance.adjustStock(product.id, 1, 'ADJUSTMENT', 'Manual addition');
+                    load();
+                  },
+                  icon: const Icon(Icons.add),
+                  label: const Text('Add stock'),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: FilledButton.icon(
+                  onPressed: product.quantity == 0
+                      ? null
+                      : () async {
+                          Navigator.pop(context);
+                          await AppDatabase.instance.adjustStock(product.id, -1, 'ADJUSTMENT', 'Manual removal');
+                          load();
+                        },
+                  icon: const Icon(Icons.remove),
+                  label: const Text('Remove stock'),
+                ),
+              ),
+            ]),
+          ]),
+        ),
+      ),
+    );
+  }
+
+  Future<void> addProduct(BuildContext context) async {
+    final draft = await showDialog<ProductDraft>(
+      context: context,
+      builder: (_) => const AddProductDialog(),
+    );
+    if (draft == null) return;
+    try {
+      await AppDatabase.instance.addProduct(draft.toMap());
+      await load();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Product added to inventory.')));
+      }
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('$error')));
+      }
+    }
+  }
+}
+
+class ProductDraft {
+  final String name, brand, category, model, sku, imageUrl;
+  final double purchase, selling, mrp;
+  final int quantity, minimum;
+
+  const ProductDraft({
+    required this.name,
+    required this.brand,
+    required this.category,
+    required this.model,
+    required this.sku,
+    required this.imageUrl,
+    required this.purchase,
+    required this.selling,
+    required this.mrp,
+    required this.quantity,
+    required this.minimum,
+  });
+
+  Map<String, Object?> toMap() => {
+        'name': name,
+        'brand': brand,
+        'category': category,
+        'model': model,
+        'sku': sku,
+        'barcode': '',
+        'image_url': imageUrl,
+        'mrp': mrp,
+        'selling_price': selling,
+        'purchase_price': purchase,
+        'quantity': quantity,
+        'minimum_stock': minimum,
+        'supplier': '',
+        'warranty': '1 Year',
+        'gst_rate': 18,
+        'hsn_code': '',
+        'location': 'Main Store',
+        'rack': '',
+        'shelf': '',
+        'serial_tracking': 0,
+        'imei_tracking': category == 'Mobile Phones' ? 1 : 0,
+        'specs': '',
+        'notes': '',
+        'archived': 0,
+      };
+}
+
+class AddProductDialog extends StatefulWidget {
+  const AddProductDialog({super.key});
+  @override
+  State<AddProductDialog> createState() => _AddProductDialogState();
+}
+
+class _AddProductDialogState extends State<AddProductDialog> {
+  final formKey = GlobalKey<FormState>();
+  final name = TextEditingController();
+  final model = TextEditingController();
+  final sku = TextEditingController(text: 'NEW-${DateTime.now().millisecondsSinceEpoch % 100000}');
+  final purchase = TextEditingController();
+  final selling = TextEditingController();
+  final mrp = TextEditingController();
+  final quantity = TextEditingController(text: '0');
+  final minimum = TextEditingController(text: '2');
+
+  String brand = 'Samsung';
+  String category = 'Mobile Phones';
+  String imageUrl = '';
+  bool searching = false;
+  List<ProductSuggestion> suggestions = [];
+
+  static const brands = [
+    'Samsung','LG','Sony','Apple','OnePlus','Motorola','Xiaomi','HP','Dell','Lenovo','ASUS','Acer','Whirlpool','IFB','Bosch','Haier','JBL','boAt','Bose','Canon','Nikon','Epson','TP-Link','Logitech','Razer','Kingston','SanDisk','Seagate','Western Digital','Philips','Oppo','Realme'
+  ];
+  static const categories = [
+    'Mobile Phones','Laptops','Televisions','Refrigerators','Air Conditioners','Washing Machines','Audio','Cameras','Printers','Networking','Storage','Accessories','Monitors','Gaming','Smartwatches','Kitchen Appliances','Fans','Coolers','Projectors','Power & Cables'
+  ];
+
+  @override
+  void dispose() {
+    for (final controller in [name, model, sku, purchase, selling, mrp, quantity, minimum]) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
+
+  Future<void> searchInternet(String value) async {
+    if (value.trim().length < 2) {
+      setState(() => suggestions = []);
+      return;
+    }
+    setState(() => searching = true);
+    final result = await ProductCatalogService.suggest(
+      query: value,
+      brand: brand,
+      category: category,
+    );
+    if (mounted) {
+      setState(() {
+        suggestions = result;
+        searching = false;
+      });
+    }
+  }
+
+  void choose(ProductSuggestion suggestion) {
+    name.text = suggestion.title;
+    model.text = suggestion.title;
+    imageUrl = suggestion.imageUrl;
+    setState(() => suggestions = []);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Add product', style: TextStyle(fontWeight: FontWeight.w900)),
+          SizedBox(height: 3),
+          Text('Choose type + brand, then search for the model.', style: TextStyle(color: muted, fontSize: 12)),
+        ],
+      ),
+      content: SizedBox(
+        width: 650,
+        child: Form(
+          key: formKey,
+          child: SingleChildScrollView(
+            child: Column(children: [
+              Row(children: [
+                Expanded(child: dropdown('Product type', category, categories, (v) => setState(() => category = v!))),
+                const SizedBox(width: 10),
+                Expanded(child: dropdown('Brand', brand, brands, (v) => setState(() => brand = v!))),
+              ]),
+              const SizedBox(height: 10),
+              TextFormField(
+                controller: name,
+                onChanged: searchInternet,
+                validator: (value) => value == null || value.trim().isEmpty ? 'Enter a model' : null,
+                decoration: const InputDecoration(
+                  labelText: 'Product / model name',
+                  hintText: 'e.g. Galaxy S25 Ultra',
+                  prefixIcon: Icon(Icons.auto_awesome_rounded),
+                ),
+              ),
+              if (searching) const Padding(padding: EdgeInsets.only(top: 8), child: LinearProgressIndicator(minHeight: 2)),
+              if (suggestions.isNotEmpty)
+                Card(
+                  color: const Color(0xFFF8F9FD),
+                  child: Column(children: [
+                    const ListTile(
+                      title: Text('Relevant product suggestions', style: TextStyle(fontWeight: FontWeight.w900)),
+                      subtitle: Text('Filtered by brand + category.'),
+                    ),
+                    for (final suggestion in suggestions.take(5))
+                      ListTile(
+                        onTap: () => choose(suggestion),
+                        leading: SizedBox(
+                          width: 50,
+                          height: 50,
+                          child: suggestion.imageUrl.isEmpty
+                              ? const Icon(Icons.devices_other)
+                              : Image.network(suggestion.imageUrl, fit: BoxFit.contain, errorBuilder: (_, __, ___) => const Icon(Icons.devices_other)),
+                        ),
+                        title: Text(suggestion.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w800)),
+                        subtitle: Text(suggestion.description, maxLines: 2, overflow: TextOverflow.ellipsis),
+                        trailing: const Icon(Icons.add_circle, color: primary),
+                      ),
+                  ]),
+                ),
+              Row(children: [
+                Expanded(child: field(model, 'Model / variant')),
+                const SizedBox(width: 10),
+                Expanded(child: field(sku, 'SKU')),
+              ]),
+              if (imageUrl.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Container(
+                    height: 130,
+                    width: double.infinity,
+                    decoration: BoxDecoration(color: background, borderRadius: BorderRadius.circular(16)),
+                    child: Image.network(imageUrl, fit: BoxFit.contain, errorBuilder: (_, __, ___) => const Icon(Icons.image_not_supported_outlined)),
+                  ),
+                ),
+              Row(children: [
+                Expanded(child: field(purchase, 'Purchase price', number: true)),
+                const SizedBox(width: 10),
+                Expanded(child: field(selling, 'Selling price', number: true)),
+              ]),
+              Row(children: [
+                Expanded(child: field(mrp, 'MRP', number: true)),
+                const SizedBox(width: 8),
+                Expanded(child: field(quantity, 'Opening stock', number: true)),
+                const SizedBox(width: 8),
+                Expanded(child: field(minimum, 'Min. stock', number: true)),
+              ]),
+            ]),
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+        FilledButton.icon(
+          onPressed: () {
+            if (!formKey.currentState!.validate()) return;
+            Navigator.pop(
+              context,
+              ProductDraft(
+                name: name.text.trim(),
+                brand: brand,
+                category: category,
+                model: model.text.trim(),
+                sku: sku.text.trim(),
+                imageUrl: imageUrl,
+                purchase: double.tryParse(purchase.text) ?? 0,
+                selling: double.tryParse(selling.text) ?? 0,
+                mrp: double.tryParse(mrp.text) ?? 0,
+                quantity: int.tryParse(quantity.text) ?? 0,
+                minimum: int.tryParse(minimum.text) ?? 2,
+              ),
+            );
+          },
+          icon: const Icon(Icons.check),
+          label: const Text('Save product'),
+        ),
+      ],
+    );
+  }
+
+  Widget dropdown(String label, String value, List<String> values, ValueChanged<String?> onChanged) =>
+      DropdownButtonFormField<String>(
+        initialValue: value,
+        isExpanded: true,
+        decoration: InputDecoration(labelText: label),
+        items: [for (final item in values) DropdownMenuItem(value: item, child: Text(item, overflow: TextOverflow.ellipsis))],
+        onChanged: onChanged,
+      );
+
+  Widget field(TextEditingController controller, String label, {bool number = false}) => Padding(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: TextFormField(
+          controller: controller,
+          keyboardType: number ? const TextInputType.numberWithOptions(decimal: true) : null,
+          validator: (value) => value == null || value.trim().isEmpty ? 'Required' : null,
+          decoration: InputDecoration(labelText: label),
+        ),
+      );
+}
+
+class SalesPage extends StatefulWidget {
+  const SalesPage({super.key});
+  @override
+  State<SalesPage> createState() => _SalesPageState();
+}
+
+class CartLine {
+  final Product product;
+  int quantity;
+  CartLine(this.product, this.quantity);
+}
+
+class _SalesPageState extends State<SalesPage> {
+  List<Product> products = [];
+  String query = '';
+  final List<CartLine> cart = [];
+  bool loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    load();
+  }
+
+  Future<void> load() async {
+    try {
+      final result = await AppDatabase.instance.products(query: query);
+      if (mounted) setState(() { products = result; loading = false; });
+    } catch (_) {
+      if (mounted) setState(() => loading = false);
+    }
+  }
+
+  CartLine? lineFor(Product product) {
+    for (final line in cart) {
+      if (line.product.id == product.id) return line;
+    }
+    return null;
+  }
+
+  double get total => cart.fold(0, (sum, line) => sum + line.product.sellingPrice * line.quantity);
+
+  void add(Product product) {
+    if (product.quantity <= 0) return;
+    final line = lineFor(product);
+    if (line == null) {
+      setState(() => cart.add(CartLine(product, 1)));
+    } else if (line.quantity < product.quantity) {
+      setState(() => line.quantity++);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Only ${product.quantity} available')));
+    }
+  }
+
+  void remove(Product product) {
+    final line = lineFor(product);
+    if (line == null) return;
+    setState(() {
+      if (line.quantity <= 1) cart.remove(line);
+      else line.quantity--;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final wide = MediaQuery.sizeOf(context).width >= 980;
+    return PageFrame(
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        const PageHeader(title: 'New sale', subtitle: 'Find product → cart → payment → invoice'),
+        const SizedBox(height: 15),
+        SearchField(
+          hint: 'Search product, brand, model or SKU',
+          onChanged: (value) { query = value; load(); },
+          onScan: () => scan(context),
+        ),
+        const SizedBox(height: 12),
+        Expanded(
+          child: wide
+              ? Row(children: [Expanded(child: productGrid()), const SizedBox(width: 14), SizedBox(width: 350, child: cartPanel())])
+              : Column(children: [Expanded(child: productGrid()), const SizedBox(height: 9), cartButton(context)]),
+        ),
+      ]),
+    );
+  }
+
+  Widget productGrid() {
+    if (loading) return const Center(child: CircularProgressIndicator());
+    if (products.isEmpty) return const EmptyCard('No sellable products', 'Add products with stock to start.', Icons.point_of_sale_rounded);
+    return LayoutBuilder(builder: (_, constraints) {
+      final columns = constraints.maxWidth > 1150 ? 4 : constraints.maxWidth > 720 ? 3 : 2;
+      return GridView.builder(
+        itemCount: products.length,
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: columns, crossAxisSpacing: 12, mainAxisSpacing: 12, childAspectRatio: .72),
+        itemBuilder: (_, i) {
+          final product = products[i];
+          final line = lineFor(product);
+          return Card(
+            child: Padding(
+              padding: const EdgeInsets.all(9),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Expanded(child: ProductImage(product: product, size: 170)),
+                Text(product.brand, style: const TextStyle(color: muted, fontSize: 10)),
+                Text(product.name, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w900)),
+                Row(children: [
+                  Expanded(child: Text(money(product.sellingPrice), style: const TextStyle(fontWeight: FontWeight.w900))),
+                  if (product.quantity == 0)
+                    const StatusBadge('OUT OF STOCK')
+                  else if (line == null)
+                    IconButton(onPressed: () => add(product), icon: const Icon(Icons.add_circle, color: primary, size: 34))
+                  else
+                    Row(mainAxisSize: MainAxisSize.min, children: [
+                      IconButton(onPressed: () => remove(product), icon: const Icon(Icons.remove_circle_outline)),
+                      Text('${line.quantity}', style: const TextStyle(fontWeight: FontWeight.w900)),
+                      IconButton(onPressed: () => add(product), icon: const Icon(Icons.add_circle, color: primary)),
+                    ]),
+                ]),
+              ]),
+            ),
+          );
+        },
+      );
+    });
+  }
+
+  Widget cartButton(BuildContext context) => SizedBox(
+        height: 52,
+        width: MediaQuery.sizeOf(context).width > 450 ? 290 : double.infinity,
+        child: FilledButton.icon(
+          onPressed: cart.isEmpty
+              ? null
+              : () => showModalBottomSheet<void>(
+                    context: context,
+                    isScrollControlled: true,
+                    showDragHandle: true,
+                    builder: (_) => SizedBox(
+                      height: MediaQuery.sizeOf(context).height * .72,
+                      child: Padding(padding: const EdgeInsets.all(15), child: cartPanel()),
+                    ),
+                  ),
+          icon: const Icon(Icons.shopping_bag_rounded),
+          label: Text(cart.isEmpty ? 'Cart · ₹0' : 'View cart · ${money(total)}'),
+        ),
+      );
+
+  Widget cartPanel() => Card(
+        child: Padding(
+          padding: const EdgeInsets.all(15),
+          child: Column(children: [
+            Row(children: [
+              const Expanded(child: Text('Current order', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900))),
+              Text('${cart.fold<int>(0, (sum, line) => sum + line.quantity)} items', style: const TextStyle(color: muted)),
+            ]),
+            const SizedBox(height: 8),
+            Expanded(
+              child: cart.isEmpty
+                  ? const EmptyCard('Cart is empty', 'Tap + to add a product.', Icons.shopping_bag_outlined)
+                  : ListView.separated(
+                      itemCount: cart.length,
+                      separatorBuilder: (_, __) => const Divider(height: 1),
+                      itemBuilder: (_, i) {
+                        final line = cart[i];
+                        return ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          leading: ProductImage(product: line.product, size: 45),
+                          title: Text(line.product.name, maxLines: 1, overflow: TextOverflow.ellipsis),
+                          subtitle: Text('${money(line.product.sellingPrice)} each'),
+                          trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+                            IconButton(onPressed: () => remove(line.product), icon: const Icon(Icons.remove_circle_outline)),
+                            Text('${line.quantity}'),
+                            IconButton(onPressed: () => add(line.product), icon: const Icon(Icons.add_circle, color: primary)),
+                          ]),
+                        );
+                      },
+                    ),
+            ),
+            const Divider(),
+            Row(children: [const Expanded(child: Text('Total', style: TextStyle(color: muted))), Text(money(total), style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w900))]),
+            const SizedBox(height: 8),
+            Row(children: [
+              Expanded(child: OutlinedButton(onPressed: cart.isEmpty ? null : () => setState(cart.clear), child: const Text('Clear cart'))),
+              const SizedBox(width: 8),
+              Expanded(child: FilledButton(onPressed: cart.isEmpty ? null : () => checkout(context), child: const Text('Checkout'))),
+            ]),
+          ]),
+        ),
+      );
+
+  Future<void> scan(BuildContext context) async {
+    final controller = TextEditingController();
+    final value = await showDialog<String>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Find by barcode / SKU'),
+        content: TextField(controller: controller, autofocus: true),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          FilledButton(onPressed: () => Navigator.pop(context, controller.text.trim()), child: const Text('Find')),
+        ],
+      ),
+    );
+    controller.dispose();
+    if (value != null && value.isNotEmpty) { query = value; load(); }
+  }
+
+  Future<void> checkout(BuildContext context) async {
+    final customer = TextEditingController(text: 'Walk-in Customer');
+    String payment = 'Cash';
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (_) => StatefulBuilder(builder: (dialogContext, setDialog) => AlertDialog(
+        title: const Text('Checkout', style: TextStyle(fontWeight: FontWeight.w900)),
+        content: Column(mainAxisSize: MainAxisSize.min, children: [
+          Text(money(total), style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900)),
+          TextField(controller: customer, decoration: const InputDecoration(labelText: 'Customer')),
+          DropdownButtonFormField<String>(
+            initialValue: payment,
+            decoration: const InputDecoration(labelText: 'Payment method'),
+            items: const [
+              DropdownMenuItem(value: 'Cash', child: Text('Cash')),
+              DropdownMenuItem(value: 'UPI', child: Text('UPI')),
+              DropdownMenuItem(value: 'Card', child: Text('Card')),
+              DropdownMenuItem(value: 'Bank transfer', child: Text('Bank transfer')),
+              DropdownMenuItem(value: 'Credit / Due', child: Text('Credit / Due')),
+            ],
+            onChanged: (value) => setDialog(() => payment = value!),
+          ),
+        ]),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('Cancel')),
+          FilledButton(onPressed: () => Navigator.pop(dialogContext, true), child: const Text('Complete sale')),
+        ],
+      )),
+    );
+
+    if (result != true) { customer.dispose(); return; }
+    try {
+      final items = cart.map((line) => <String, Object?>{
+            'product_id': line.product.id!,
+            'quantity': line.quantity,
+            'price': line.product.sellingPrice,
+            'name': line.product.name,
+          }).toList();
+      await AppDatabase.instance.sellCart(
+        items,
+        customer: customer.text.trim().isEmpty ? 'Walk-in Customer' : customer.text.trim(),
+        payment: payment,
+      );
+      if (!mounted) return;
+      setState(cart.clear);
+      await load();
+      if (context.mounted) {
+        await showDialog<void>(
+          context: context,
+          builder: (_) => AlertDialog(
+            title: const Text('✓ Sale completed'),
+            content: Text('Total ${money(total)}\nPaid via $payment\nInventory updated automatically.'),
+            actions: [FilledButton(onPressed: () => Navigator.pop(context), child: const Text('New sale'))],
+          ),
+        );
+      }
+    } catch (error) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$error')));
+    } finally {
+      customer.dispose();
+    }
+  }
+}
+
+class PurchasesPage extends StatefulWidget {
+  const PurchasesPage({super.key});
+  @override
+  State<PurchasesPage> createState() => _PurchasesPageState();
+}
+
+class _PurchasesPageState extends State<PurchasesPage> {
+  List<Map<String, Object?>> rows = [];
+
+  @override
+  void initState() { super.initState(); load(); }
+
+  Future<void> load() async {
+    final result = await AppDatabase.instance.purchases();
+    if (mounted) setState(() => rows = result);
+  }
+
+  @override
+  Widget build(BuildContext context) => PageFrame(
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          PageHeader(
+            title: 'Purchases',
+            subtitle: 'Receive stock and manage supplier invoices.',
+            action: FilledButton.icon(onPressed: () => newPurchase(context), icon: const Icon(Icons.add), label: const Text('New purchase')),
+          ),
+          const SizedBox(height: 15),
+          Expanded(
+            child: rows.isEmpty
+                ? const EmptyCard('No purchases yet', 'Receive your first supplier order.', Icons.shopping_bag_outlined)
+                : ListView.separated(
+                    itemCount: rows.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 8),
+                    itemBuilder: (_, i) {
+                      final row = rows[i];
+                      return Card(child: ListTile(
+                        title: Text(row['invoice']?.toString() ?? 'Purchase', style: const TextStyle(fontWeight: FontWeight.w900)),
+                        subtitle: Text('${row['supplier'] ?? 'Supplier'} • ${row['date'] ?? ''}'),
+                        trailing: Text(money((row['total'] as num?) ?? 0), style: const TextStyle(fontWeight: FontWeight.w900)),
+                      ));
+                    },
+                  ),
+          ),
+        ]),
+      );
+
+  Future<void> newPurchase(BuildContext context) async {
+    final products = await AppDatabase.instance.products();
+    if (products.isEmpty) return;
+    Product selected = products.first;
+    final supplier = TextEditingController();
+    final quantity = TextEditingController(text: '1');
+    final price = TextEditingController();
+
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (_) => StatefulBuilder(builder: (dialogContext, setDialog) => AlertDialog(
+        title: const Text('New purchase'),
+        content: Column(mainAxisSize: MainAxisSize.min, children: [
+          TextField(controller: supplier, decoration: const InputDecoration(labelText: 'Supplier')),
+          DropdownButtonFormField<Product>(
+            initialValue: selected,
+            isExpanded: true,
+            decoration: const InputDecoration(labelText: 'Product'),
+            items: [for (final p in products) DropdownMenuItem(value: p, child: Text('${p.brand} ${p.name}', overflow: TextOverflow.ellipsis))],
+            onChanged: (value) => setDialog(() => selected = value!),
+          ),
+          TextField(controller: quantity, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Quantity')),
+          TextField(controller: price, keyboardType: const TextInputType.numberWithOptions(decimal: true), decoration: const InputDecoration(labelText: 'Cost per unit')),
+        ]),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('Cancel')),
+          FilledButton(onPressed: () => Navigator.pop(dialogContext, true), child: const Text('Receive stock')),
+        ],
+      )),
+    );
+
+    if (ok == true) {
+      final q = int.tryParse(quantity.text) ?? 0;
+      final cost = double.tryParse(price.text) ?? selected.purchasePrice;
+      await AppDatabase.instance.purchase(
+        supplier: supplier.text.trim().isEmpty ? 'Supplier' : supplier.text.trim(),
+        invoice: 'PO-${DateTime.now().millisecondsSinceEpoch % 100000}',
+        items: [{'product_id': selected.id!, 'quantity': q, 'price': cost}],
+        payment: 'Cash',
+        paid: cost * q,
+      );
+      await load();
+    }
+    supplier.dispose();
+    quantity.dispose();
+    price.dispose();
+  }
+}
+
+class MorePage extends StatelessWidget {
+  const MorePage({super.key});
+
+  @override
+  Widget build(BuildContext context) => PageFrame(
+        child: ListView(children: [
+          const PageHeader(title: 'More', subtitle: 'Customers, suppliers, expenses, reports and settings.'),
+          const SizedBox(height: 16),
+          ToolTile('Customers', 'Customer profiles and balances', Icons.people_alt_outlined, primary, () => openList(context, 'Customers', 'customers', Icons.people_alt_outlined)),
+          ToolTile('Suppliers', 'Supplier records and purchase history', Icons.local_shipping_outlined, purple, () => openList(context, 'Suppliers', 'suppliers', Icons.local_shipping_outlined)),
+          ToolTile('Expenses', 'Track shop operating costs', Icons.receipt_long_outlined, orange, () => addExpense(context)),
+          ToolTile('Reports & analytics', 'Sales, profit, expenses and stock', Icons.bar_chart_rounded, green, () => showReport(context)),
+          ToolTile('Backup & Restore', 'Inspect local shop data', Icons.backup_rounded, const Color(0xFF3D7DD8), () => showBackup(context)),
+          ToolTile('Settings', 'Shop profile and preferences', Icons.settings_outlined, muted, () => showSettings(context)),
+        ]),
+      );
+}
+
+class ToolTile extends StatelessWidget {
+  final String title, subtitle;
+  final IconData icon;
+  final Color color;
+  final VoidCallback onTap;
+  const ToolTile(this.title, this.subtitle, this.icon, this.color, this.onTap, {super.key});
+
+  @override
+  Widget build(BuildContext context) => Card(
+        margin: const EdgeInsets.only(bottom: 9),
+        child: ListTile(
+          onTap: onTap,
+          leading: Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(color: color.withAlpha(17), borderRadius: BorderRadius.circular(13)),
+            child: Icon(icon, color: color),
+          ),
+          title: Text(title, style: const TextStyle(fontWeight: FontWeight.w800)),
+          subtitle: Text(subtitle, style: const TextStyle(color: muted, fontSize: 11)),
+          trailing: const Icon(Icons.chevron_right_rounded, color: muted),
+        ),
+      );
+}
+
+Future<void> openList(BuildContext context, String title, String table, IconData icon) async {
+  final rows = await AppDatabase.instance.db.then((db) => db.query(table, limit: 100));
+  if (!context.mounted) return;
+  await Navigator.push(context, MaterialPageRoute(builder: (_) => SimpleListPage(title: title, icon: icon, rows: rows)));
+}
+
+class SimpleListPage extends StatelessWidget {
+  final String title;
+  final IconData icon;
+  final List<Map<String, Object?>> rows;
+  const SimpleListPage({super.key, required this.title, required this.icon, required this.rows});
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+        backgroundColor: background,
+        appBar: AppBar(backgroundColor: background, title: Text(title, style: const TextStyle(fontWeight: FontWeight.w900))),
+        body: ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: rows.length,
+          itemBuilder: (_, i) {
+            final values = rows[i].values.where((value) => value != null && value.toString().isNotEmpty).take(4).map((value) => value.toString()).toList();
+            return Card(
+              margin: const EdgeInsets.only(bottom: 8),
+              child: ListTile(
+                leading: CircleAvatar(backgroundColor: primary.withAlpha(18), child: Icon(icon, color: primary)),
+                title: Text(values.isEmpty ? 'Record' : values.first, style: const TextStyle(fontWeight: FontWeight.w800)),
+                subtitle: Text(values.skip(1).join(' • ')),
+              ),
+            );
+          },
+        ),
+      );
+}
+
+Future<void> addExpense(BuildContext context) async {
+  final category = TextEditingController(text: 'Other');
+  final amount = TextEditingController();
+  final note = TextEditingController();
+  final ok = await showDialog<bool>(
+    context: context,
+    builder: (_) => AlertDialog(
+      title: const Text('Add expense'),
+      content: Column(mainAxisSize: MainAxisSize.min, children: [
+        TextField(controller: category, decoration: const InputDecoration(labelText: 'Category')),
+        TextField(controller: amount, keyboardType: const TextInputType.numberWithOptions(decimal: true), decoration: const InputDecoration(labelText: 'Amount')),
+        TextField(controller: note, decoration: const InputDecoration(labelText: 'Notes')),
+      ]),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+        FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Save')),
+      ],
+    ),
+  );
+  if (ok == true) {
+    await AppDatabase.instance.addExpense(category.text, double.tryParse(amount.text) ?? 0, 'Cash', note.text);
+  }
+  category.dispose(); amount.dispose(); note.dispose();
+}
+
+Future<void> showReport(BuildContext context) async {
+  final data = await AppDatabase.instance.monthly();
+  if (!context.mounted) return;
+  await showModalBottomSheet<void>(
+    context: context,
+    showDragHandle: true,
+    builder: (_) => Padding(
+      padding: const EdgeInsets.all(20),
+      child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+        const Text('This month', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900)),
+        for (final entry in <String, num>{
+          'Sales': data['sales'] ?? 0,
+          'COGS': data['cogs'] ?? 0,
+          'Gross profit': data['gross'] ?? 0,
+          'Expenses': data['expenses'] ?? 0,
+          'Net profit': data['net'] ?? 0,
+          'Inventory': data['inventory'] ?? 0,
+        }.entries)
+          Padding(padding: const EdgeInsets.symmetric(vertical: 6), child: Row(children: [Expanded(child: Text(entry.key, style: const TextStyle(color: muted))), Text(money(entry.value), style: const TextStyle(fontWeight: FontWeight.w900))])),
+      ],
+    ),
+  );
+}
+
+Future<void> showBackup(BuildContext context) async {
+  final db = await AppDatabase.instance.db;
+  final count = Sqflite.firstIntValue(await db.rawQuery('SELECT COUNT(*) FROM products')) ?? 0;
+  if (!context.mounted) return;
+  await showDialog<void>(
+    context: context,
+    builder: (_) => AlertDialog(
+      title: const Text('Backup & Restore'),
+      content: Text('$count products are stored locally. The live database is available on this device.'),
+      actions: [FilledButton(onPressed: () => Navigator.pop(context), child: const Text('Close'))],
+    ),
+  );
+}
+
+Future<void> showSettings(BuildContext context) async {
+  final db = await AppDatabase.instance.db;
+  final rows = await db.query('settings', where: 'key=?', whereArgs: ['shop_name'], limit: 1);
+  final controller = TextEditingController(text: rows.isEmpty ? 'ElectroMart' : rows.first['value']?.toString() ?? 'ElectroMart');
+  if (!context.mounted) return;
+  await showDialog<void>(
+    context: context,
+    builder: (_) => AlertDialog(
+      title: const Text('Settings'),
+      content: TextField(controller: controller, decoration: const InputDecoration(labelText: 'Shop name')),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+        FilledButton(
+          onPressed: () async {
+            await db.insert('settings', {'key': 'shop_name', 'value': controller.text.trim()}, conflictAlgorithm: ConflictAlgorithm.replace);
+            if (context.mounted) Navigator.pop(context);
+          },
+          child: const Text('Save'),
+        ),
+      ],
+    ),
+  );
+  controller.dispose();
+}
+
+IconData categoryIcon(String category) {
+  switch (category) {
+    case 'Mobile Phones': return Icons.phone_android_rounded;
+    case 'Laptops': return Icons.laptop_mac_rounded;
+    case 'Televisions': return Icons.tv_rounded;
+    case 'Refrigerators': return Icons.kitchen_rounded;
+    case 'Audio': return Icons.headphones_rounded;
+    case 'Cameras': return Icons.photo_camera_rounded;
+    case 'Printers': return Icons.print_rounded;
+    case 'Storage': return Icons.storage_rounded;
+    default: return Icons.devices_other_rounded;
+  }
+}
