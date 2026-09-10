@@ -28,7 +28,8 @@ jobs:
       - name: Enable Android internet access
         run: sed -i '/<manifest/a\    <uses-permission android:name="android.permission.INTERNET" />' android/app/src/main/AndroidManifest.xml
       - run: sed -i 's/compileSdk = flutter.compileSdkVersion/compileSdk = 36/' android/app/build.gradle.kts
-      - run: flutter build apk --release
+      - name: Build premium shopkeeper APK
+        run: flutter build apk --release -t lib/premium_main.dart
       - uses: actions/upload-artifact@v4
         with:
           name: inventory-android-apk
